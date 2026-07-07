@@ -1,0 +1,6 @@
+name: rentease
+
+packages:
+  - mobile_app
+  - backend
+  - admin_panel

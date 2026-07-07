@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Dependencies
+node_modules/
+.dart_tool/
+.packages
+.pub-cache/
+build/
+dist/
+coverage/
+
+# Logs
+*.log
