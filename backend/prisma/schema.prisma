@@ -26,6 +26,127 @@ model User {
   isVerified   Boolean  @default(false)
   isActive     Boolean  @default(true)
 
+  properties   Property[]
+  favorites Favorite[]
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Property {
+  id          String   @id @default(cuid())
+
+  title       String
+  description String
+
+  price       Decimal @db.Decimal(10, 2)
+
+  address     String
+  locality    String?
+  landmark    String?
+
+  city        String
+  state       String
+  country     String
+  pincode     String
+
+  latitude    Float?
+  longitude   Float?
+
+  bedrooms    Int
+  bathrooms   Int
+  area        Float
+
+  propertyType PropertyType
+  furnishing   FurnishingType
+
+  parking      Boolean @default(false)
+  petFriendly  Boolean @default(false)
+
+  securityDeposit Decimal @db.Decimal(10, 2)
+
+  isAvailable Boolean @default(true)
+
+  ownerId String
+  owner   User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  amenities PropertyAmenity[]
+
+  images PropertyImage[]
+
+  favorites Favorite[]
+
+  createdAt DateTime @default(now())
+  
+  updatedAt DateTime @updatedAt
+}
+
+model Amenity {
+  id         String   @id @default(cuid())
+  name       String   @unique
+
+  properties PropertyAmenity[]
+
+  createdAt  DateTime @default(now())
+}
+
+model PropertyAmenity {
+  propertyId String
+  amenityId  String
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, amenityId])
+}
+
+
+model PropertyImage {
+  id           String   @id @default(cuid())
+
+  imageUrl     String
+  publicId     String?
+
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+
+  userId     String
+  propertyId String
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  STUDIO
+  ROOM
+  PG
+}
+
+enum FurnishingType {
+  UNFURNISHED
+  SEMI_FURNISHED
+  FULLY_FURNISHED
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+  RENTED
 }

@@ -1,0 +1,116 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+
+import { PropertiesService } from './properties.service';
+
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+
+import { UserRole } from '@prisma/client';
+
+import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
+import { FilterPropertyDto } from './dto/filter-property.dto';
+
+@ApiTags('Properties')
+@Controller('properties')
+export class PropertiesController {
+  constructor(
+    private readonly propertiesService: PropertiesService,
+  ) {}
+
+  // Create Property
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Create Property',
+  })
+  create(
+    @Body() createPropertyDto: CreatePropertyDto,
+    @Request() req: any,
+  ) {
+    return this.propertiesService.create(
+      createPropertyDto,
+      req.user,
+    );
+  }
+
+  // Get All Properties
+  @Get()
+  @ApiOperation({
+    summary: 'Get All Properties',
+  })
+  findAll(
+    @Query() filterDto: FilterPropertyDto,
+  ) {
+    return this.propertiesService.findAll(
+      filterDto,
+    );
+  }
+
+  // Get Property By Id
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get Property By ID',
+  })
+  findOne(
+    @Param('id') id: string,
+  ) {
+    return this.propertiesService.findOne(id);
+  }
+
+  // Update Property
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update Property',
+  })
+  update(
+    @Param('id') id: string,
+    @Body() updatePropertyDto: UpdatePropertyDto,
+    @Request() req: any,
+  ) {
+    return this.propertiesService.update(
+      id,
+      updatePropertyDto,
+      req.user,
+    );
+  }
+
+  // Delete Property
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete Property',
+  })
+  remove(
+    @Param('id') id: string,
+    @Request() req: any,
+  ) {
+    return this.propertiesService.remove(
+      id,
+      req.user,
+    );
+  }
+}

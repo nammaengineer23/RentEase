@@ -1,0 +1,13 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+
+export class CreateAmenityDto {
+  @ApiProperty({
+    example: 'WiFi',
+    description: 'Amenity name',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name!: string;
+}
