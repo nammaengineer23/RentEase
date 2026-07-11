@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 
 import { join } from 'path';
@@ -8,6 +9,7 @@ import { AppService } from './app.service';
 
 import { DatabaseModule } from './database/database.module';
 import { PrismaModule } from './prisma/prisma.module';
+
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { PropertiesModule } from './modules/properties/properties.module';
@@ -16,32 +18,27 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { PropertyImagesModule } from './modules/property-images/property-images.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 
-
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
 
     DatabaseModule,
-
     PrismaModule,
-
     AuthModule,
-
     UsersModule,
-
     PropertiesModule,
-
     AmenitiesModule,
-
     UploadsModule,
-
     PropertyImagesModule,
-
     FavoritesModule,
-    
   ],
 
   controllers: [AppController],

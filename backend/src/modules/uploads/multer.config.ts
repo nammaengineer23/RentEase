@@ -4,31 +4,35 @@ import { extname } from 'path';
 
 export const multerOptions: MulterOptions = {
   storage: diskStorage({
-    destination: './uploads/properties',
+    destination: './uploads/temp',
 
     filename: (req, file, cb) => {
-      const filename =
-        Date.now() +
-        '-' +
-        Math.round(Math.random() * 1e9) +
-        extname(file.originalname);
+      const uniqueName =
+        `${Date.now()}-${Math.round(
+          Math.random() * 1_000_000_000,
+        )}${extname(file.originalname).toLowerCase()}`;
 
-      cb(null, filename);
+      cb(null, uniqueName);
     },
   }),
 
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: 5 * 1024 * 1024, // 5 MB
+    files: 10,
   },
 
   fileFilter: (req, file, cb) => {
-    if (
-      !file.mimetype.match(
-        /\/(jpg|jpeg|png|webp)$/i,
-      )
-    ) {
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ];
+
+    if (!allowedMimeTypes.includes(file.mimetype)) {
       return cb(
-        new Error('Only image files are allowed'),
+        new Error(
+          'Only JPEG, PNG and WEBP images are allowed.',
+        ),
         false,
       );
     }

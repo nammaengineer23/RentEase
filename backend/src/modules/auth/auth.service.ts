@@ -39,7 +39,7 @@ export class AuthService {
         fullName: dto.fullName,
         email: dto.email,
         phone: dto.phone,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       },
     });
 
@@ -62,13 +62,19 @@ export class AuthService {
   // Login
   //---------------------------------------
   async login(loginDto: LoginDto) {
-  const { email, password } = loginDto;
-
-  const user = await this.prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+  const { login, password } = loginDto;
+  const user = await this.prisma.user.findFirst({
+  where: {
+    OR: [
+      {
+        email: login,
+      },
+      {
+        phone: login,
+      },
+    ],
+  },
+});
 
   if (!user) {
     throw new UnauthorizedException(

@@ -1,77 +1,39 @@
 import {
+  BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 
-import { PrismaService } from '../../database/prisma.service';
+import { ImageFileValidator } from '../../common/validators/image-file.validator';
+import {
+  generateFileName,
+} from '../../common/utils/file.util';
 
 @Injectable()
 export class UploadsService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
 
-  async uploadPropertyImages(
-    propertyId: string,
-    files: Express.Multer.File[],
+  async uploadImage(
+    file: Express.Multer.File,
   ) {
-    // Check property exists
-    const property =
-      await this.prisma.property.findUnique({
-        where: {
-          id: propertyId,
-        },
-      });
-
-    if (!property) {
-      throw new NotFoundException(
-        'Property not found.',
+    if (!file) {
+      throw new BadRequestException(
+        'No file uploaded',
       );
     }
 
-    // Existing images
-    const existingImages =
-      await this.prisma.propertyImage.findMany({
-        where: {
-          propertyId,
-        },
-        orderBy: {
-          displayOrder: 'asc',
-        },
-      });
+    const validator = new ImageFileValidator();
 
-    const isFirstUpload =
-      existingImages.length === 0;
-
-    const uploadedImages = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      const image =
-        await this.prisma.propertyImage.create({
-          data: {
-            propertyId,
-
-            imageUrl:
-              '/uploads/properties/' +
-              file.filename,
-
-            isPrimary:
-              isFirstUpload && i === 0,
-
-            displayOrder:
-              existingImages.length + i,
-          },
-        });
-
-      uploadedImages.push(image);
+    if (!validator.isValid(file)) {
+      throw new BadRequestException(
+        validator.buildErrorMessage(),
+      );
     }
 
     return {
-      success: true,
-      message: `${uploadedImages.length} image(s) uploaded successfully.`,
-      images: uploadedImages,
+      originalName: file.originalname,
+      filename: file.filename ?? generateFileName(file.originalname),
+      mimetype: file.mimetype,
+      size: file.size,
+      path: file.path,
     };
   }
 }

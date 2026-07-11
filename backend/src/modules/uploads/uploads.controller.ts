@@ -1,76 +1,110 @@
 import {
   Controller,
-  Param,
   Post,
-  UploadedFiles,
-  UseGuards,
+  UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 
 import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiConsumes,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+  FileInterceptor,
+} from '@nestjs/platform-express';
 
-import { FilesInterceptor } from '@nestjs/platform-express';
+import {
+  diskStorage,
+} from 'multer';
 
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import {
+  extname,
+} from 'path';
 
-import { UserRole } from '@prisma/client';
+import {
+  UploadsService,
+} from './uploads.service';
 
-import { multerOptions } from './multer.config';
-import { UploadsService } from './uploads.service';
+import {
+  generateFileName,
+} from '../../common/utils/file.util';
 
-@ApiTags('Uploads')
+
 @Controller('uploads')
 export class UploadsController {
+
   constructor(
     private readonly uploadsService: UploadsService,
   ) {}
 
-  @Post('property/:propertyId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Upload property images',
-  })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        files: {
-          type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
+  @Post('image')
+  @UseInterceptors(
+    FileInterceptor(
+      'file',
+      {
+        storage: diskStorage({
+          destination: './uploads',
+          filename: (
+            req,
+            file,
+            callback,
+          ) => {
+            const filename =
+              generateFileName(
+                file.originalname,
+              );
+
+            callback(
+              null,
+              filename,
+            );
           },
+        }),
+        limits: {
+          fileSize:
+            5 * 1024 * 1024, // 5MB
+        },
+        fileFilter: (
+          req,
+          file,
+          callback,
+        ) => {
+          const allowedExtensions =
+            [
+              '.jpg',
+              '.jpeg',
+              '.png',
+              '.webp',
+            ];
+
+          const extension =
+            extname(
+              file.originalname,
+            ).toLowerCase();
+
+          if (
+            allowedExtensions.includes(
+              extension,
+            )
+          ) {
+            callback(
+              null,
+              true,
+            );
+          } else {
+            callback(
+              new Error(
+                'Only JPG, JPEG, PNG and WEBP files are allowed',
+              ),
+              false,
+            );
+          }
         },
       },
-    },
-  })
-  @UseInterceptors(
-    FilesInterceptor(
-      'files',
-      10,
-      multerOptions,
     ),
   )
-  uploadPropertyImages(
-    @Param('propertyId') propertyId: string,
-
-    @UploadedFiles()
-    files: Express.Multer.File[],
+  async uploadImage(
+    @UploadedFile()
+    file: Express.Multer.File,
   ) {
-    return this.uploadsService.uploadPropertyImages(
-      propertyId,
-      files,
+    return this.uploadsService.uploadImage(
+      file,
     );
   }
 }
