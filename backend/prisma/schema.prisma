@@ -63,6 +63,8 @@ model Property {
 
   securityDeposit Decimal @db.Decimal(10, 2)
 
+  displayOrder Int @default(0)
+
   isAvailable Boolean @default(true)
 
   ownerId String
@@ -105,6 +107,7 @@ model PropertyImage {
   publicId String?
 
   isPrimary    Boolean @default(false)
+  
   displayOrder Int     @default(0)
 
   propertyId String

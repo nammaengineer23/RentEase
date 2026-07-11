@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+#FireBase
+firebase/service-account.json
+
 # Build output
 dist/
 

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
-
+import { FirebaseModule } from './firebase/firebase.module';
 import { join } from 'path';
 
 import { AppController } from './app.controller';
@@ -39,6 +39,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     UploadsModule,
     PropertyImagesModule,
     FavoritesModule,
+    FirebaseModule,
   ],
 
   controllers: [AppController],

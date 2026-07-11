@@ -18,71 +18,75 @@ export class PropertiesService {
     private readonly prisma: PrismaService,
   ) {}
 
- // ===========================
-// Create Property
-// ===========================
+  // ===========================
+  // Create Property
+  // ===========================
 
-async create(
-  createPropertyDto: CreatePropertyDto,
-  user: any,
-) {
-  const {
-    amenityIds,
-    ...propertyData
-  } = createPropertyDto;
+  async create(
+    createPropertyDto: CreatePropertyDto,
+    user: any,
+  ) {
+    const {
+      amenityIds,
+      ...propertyData
+    } = createPropertyDto;
 
-  const property =
-    await this.prisma.property.create({
-      data: {
-        ...propertyData,
+    const property =
+      await this.prisma.property.create({
+        data: {
+          ...propertyData,
 
-        ownerId: user.id,
+          ownerId: user.id,
 
-        amenities: amenityIds?.length
-          ? {
-              create: amenityIds.map(
-                (amenityId) => ({
-                  amenity: {
-                    connect: {
-                      id: amenityId,
+          amenities: amenityIds?.length
+            ? {
+                create: amenityIds.map(
+                  (amenityId) => ({
+                    amenity: {
+                      connect: {
+                        id: amenityId,
+                      },
                     },
-                  },
-                }),
-              ),
-            }
-          : undefined,
-      },
-
-      include: {
-        owner: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            phone: true,
-          },
+                  }),
+                ),
+              }
+            : undefined,
         },
 
-        amenities: {
-          include: {
-            amenity: true,
+        include: {
+          owner: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
           },
-        },
-      },
-    });
 
-  return {
-    success: true,
-    message: 'Property created successfully.',
-    property,
-  };
-}
+          amenities: {
+            include: {
+              amenity: true,
+            },
+          },
+
+          images: true,
+        },
+      });
+
+    return {
+      success: true,
+      message: 'Property created successfully.',
+      property,
+    };
+  }
 
   // ===========================
   // Get All Properties
   // ===========================
 
-  async findAll(filterDto: FilterPropertyDto) {
+  async findAll(
+    filterDto: FilterPropertyDto,
+  ) {
     const {
       page = '1',
       limit = '10',
@@ -105,9 +109,13 @@ async create(
       order = 'desc',
     } = filterDto;
 
-    const where: Prisma.PropertyWhereInput = {};
+    const where: Prisma.PropertyWhereInput =
+      {};
 
+    // -------------------------
     // Search
+    // -------------------------
+
     if (search) {
       where.OR = [
         {
@@ -128,69 +136,161 @@ async create(
             mode: 'insensitive',
           },
         },
+        {
+          city: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
       ];
     }
 
+    // -------------------------
     // Location
-    if (city) where.city = city;
+    // -------------------------
 
-    if (locality) where.locality = locality;
+    if (city) {
+      where.city = {
+        equals: city,
+        mode: 'insensitive',
+      };
+    }
 
-    if (pincode) where.pincode = pincode;
+    if (locality) {
+      where.locality = {
+        contains: locality,
+        mode: 'insensitive',
+      };
+    }
 
-    // Property
-    if (propertyType)
+    if (pincode) {
+      where.pincode = pincode;
+    }
+
+    // -------------------------
+    // Property Details
+    // -------------------------
+
+    if (propertyType) {
       where.propertyType = propertyType;
+    }
 
-    if (furnishing)
+    if (furnishing) {
       where.furnishing = furnishing;
+    }
 
-    if (bedrooms)
-      where.bedrooms = Number(bedrooms);
+    if (bedrooms) {
+      where.bedrooms = Number(
+        bedrooms,
+      );
+    }
 
-    if (bathrooms)
-      where.bathrooms = Number(bathrooms);
+    if (bathrooms) {
+      where.bathrooms = Number(
+        bathrooms,
+      );
+    }
 
-    // Price
+    // -------------------------
+    // Price Filter
+    // -------------------------
+
     if (minPrice || maxPrice) {
       where.price = {};
 
-      if (minPrice)
-        where.price.gte = new Prisma.Decimal(
-          minPrice,
-        );
+      if (minPrice) {
+        where.price.gte =
+          new Prisma.Decimal(
+            minPrice,
+          );
+      }
 
-      if (maxPrice)
-        where.price.lte = new Prisma.Decimal(
-          maxPrice,
-        );
+      if (maxPrice) {
+        where.price.lte =
+          new Prisma.Decimal(
+            maxPrice,
+          );
+      }
     }
 
-    // Area
+    // -------------------------
+    // Area Filter
+    // -------------------------
+
     if (minArea || maxArea) {
       where.area = {};
 
-      if (minArea)
-        where.area.gte = Number(minArea);
+      if (minArea) {
+        where.area.gte =
+          Number(minArea);
+      }
 
-      if (maxArea)
-        where.area.lte = Number(maxArea);
+      if (maxArea) {
+        where.area.lte =
+          Number(maxArea);
+      }
     }
 
+    // -------------------------
     // Features
-    if (parking !== undefined)
-      where.parking = parking === 'true';
+    // -------------------------
 
-    if (petFriendly !== undefined)
+    if (parking !== undefined) {
+      where.parking =
+        parking === 'true';
+    }
+
+    if (
+      petFriendly !== undefined
+    ) {
       where.petFriendly =
         petFriendly === 'true';
+    }
 
-    if (isAvailable !== undefined)
+    if (
+      isAvailable !== undefined
+    ) {
       where.isAvailable =
         isAvailable === 'true';
+    }
+
+    // -------------------------
+    // Pagination
+    // -------------------------
+
+    const pageNumber =
+      Number(page);
+
+    const limitNumber =
+      Number(limit);
 
     const skip =
-      (Number(page) - 1) * Number(limit);
+      (pageNumber - 1) *
+      limitNumber;
+
+    // -------------------------
+    // Secure Sorting
+    // -------------------------
+
+    const allowedSortFields = [
+      'createdAt',
+      'price',
+      'area',
+      'bedrooms',
+      'bathrooms',
+    ];
+
+    const safeSortBy =
+      allowedSortFields.includes(
+        sortBy,
+      )
+        ? sortBy
+        : 'createdAt';
+
+    const safeOrder =
+      order === 'asc'
+        ? 'asc'
+        : 'desc';
 
     const [properties, total] =
       await this.prisma.$transaction([
@@ -206,15 +306,35 @@ async create(
                 phone: true,
               },
             },
+
+            amenities: {
+              include: {
+                amenity: true,
+              },
+            },
+
+            images: {
+              orderBy: {
+                displayOrder:
+                  'asc',
+              },
+            },
+
+            _count: {
+              select: {
+                favorites: true,
+              },
+            },
           },
 
           orderBy: {
-            [sortBy]: order,
+            [safeSortBy]:
+              safeOrder,
           },
 
           skip,
 
-          take: Number(limit),
+          take: limitNumber,
         }),
 
         this.prisma.property.count({
@@ -226,11 +346,13 @@ async create(
       success: true,
 
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNumber,
+        limit: limitNumber,
         total,
+
         totalPages: Math.ceil(
-          total / Number(limit),
+          total /
+            limitNumber,
         ),
       },
 
@@ -238,7 +360,7 @@ async create(
     };
   }
 
-  // ===========================
+    // ===========================
   // Get Property By Id
   // ===========================
 
@@ -256,6 +378,24 @@ async create(
               fullName: true,
               email: true,
               phone: true,
+            },
+          },
+
+          amenities: {
+            include: {
+              amenity: true,
+            },
+          },
+
+          images: {
+            orderBy: {
+              displayOrder: 'asc',
+            },
+          },
+
+          _count: {
+            select: {
+              favorites: true,
             },
           },
         },
@@ -284,7 +424,13 @@ async create(
   ) {
     const property =
       await this.prisma.property.findUnique({
-        where: { id },
+        where: {
+          id,
+        },
+
+        include: {
+          amenities: true,
+        },
       });
 
     if (!property) {
@@ -302,21 +448,71 @@ async create(
       );
     }
 
+    const {
+      amenityIds,
+      ...propertyData
+    } = updatePropertyDto;
+
     const updatedProperty =
       await this.prisma.property.update({
-        where: { id },
+        where: {
+          id,
+        },
 
-        data: updatePropertyDto,
+        data: {
+          ...propertyData,
+
+          amenities:
+            amenityIds !== undefined
+              ? {
+                  deleteMany: {},
+
+                  create: amenityIds.map(
+                    (amenityId) => ({
+                      amenity: {
+                        connect: {
+                          id: amenityId,
+                        },
+                      },
+                    }),
+                  ),
+                }
+              : undefined,
+        },
+
+        include: {
+          owner: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+
+          amenities: {
+            include: {
+              amenity: true,
+            },
+          },
+
+          images: {
+            orderBy: {
+              displayOrder: 'asc',
+            },
+          },
+        },
       });
 
     return {
       success: true,
-      message: 'Property updated successfully.',
+      message:
+        'Property updated successfully.',
       property: updatedProperty,
     };
   }
 
-  // ===========================
+    // ===========================
   // Delete Property
   // ===========================
 
@@ -326,7 +522,9 @@ async create(
   ) {
     const property =
       await this.prisma.property.findUnique({
-        where: { id },
+        where: {
+          id,
+        },
       });
 
     if (!property) {
@@ -345,12 +543,15 @@ async create(
     }
 
     await this.prisma.property.delete({
-      where: { id },
+      where: {
+        id,
+      },
     });
 
     return {
       success: true,
-      message: 'Property deleted successfully.',
+      message:
+        'Property deleted successfully.',
     };
   }
 }
