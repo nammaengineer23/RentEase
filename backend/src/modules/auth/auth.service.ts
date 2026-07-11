@@ -61,40 +61,50 @@ export class AuthService {
   //---------------------------------------
   // Login
   //---------------------------------------
-  async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
-    });
+  async login(loginDto: LoginDto) {
+  const { email, password } = loginDto;
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+  const user = await this.prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
 
-    const passwordMatched = await bcrypt.compare(
-      dto.password,
-      user.password,
+  if (!user) {
+    throw new UnauthorizedException(
+      'Invalid email or password.',
     );
-
-    if (!passwordMatched) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
-
-    return {
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-      },
-      ...tokens,
-    };
   }
+
+  const passwordMatched = await bcrypt.compare(
+    password,
+    user.passwordHash,
+  );
+
+  if (!passwordMatched) {
+    throw new UnauthorizedException(
+      'Invalid email or password.',
+    );
+  }
+
+  const accessToken = await this.jwtService.signAsync({
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+  });
+
+  return {
+    success: true,
+    message: 'Login successful.',
+    accessToken,
+    user: {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    },
+  };
+}
 
   //---------------------------------------
   // Logout

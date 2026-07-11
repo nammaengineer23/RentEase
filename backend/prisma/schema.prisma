@@ -18,7 +18,8 @@ model User {
   fullName String
   email    String   @unique
   phone    String   @unique
-  password String
+
+  passwordHash String
 
   role UserRole @default(USER)
 
