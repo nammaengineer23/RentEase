@@ -10,8 +10,7 @@ import { Prisma, UserRole } from '@prisma/client';
 
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
-import { FilterPropertyDto } from './dto/filter-property.dto';
-
+import { FilterPropertiesDto } from './dto/filter-property.dto';
 @Injectable()
 export class PropertiesService {
   constructor(
@@ -85,7 +84,7 @@ export class PropertiesService {
   // ===========================
 
   async findAll(
-    filterDto: FilterPropertyDto,
+    filterDto: FilterPropertiesDto,
   ) {
     const {
       page = '1',
@@ -235,24 +234,17 @@ export class PropertiesService {
     // Features
     // -------------------------
 
-    if (parking !== undefined) {
-      where.parking =
-        parking === 'true';
-    }
+   if (parking !== undefined) {
+  where.parking = parking;
+}
 
-    if (
-      petFriendly !== undefined
-    ) {
-      where.petFriendly =
-        petFriendly === 'true';
-    }
+    if (petFriendly !== undefined) {
+  where.petFriendly = petFriendly;
+}
 
-    if (
-      isAvailable !== undefined
-    ) {
-      where.isAvailable =
-        isAvailable === 'true';
-    }
+    if (isAvailable !== undefined) {
+  where.isAvailable = isAvailable;
+}
 
     // -------------------------
     // Pagination

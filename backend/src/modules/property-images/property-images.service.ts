@@ -16,66 +16,72 @@ export class PropertyImagesService {
   ) {}
 
   // =====================================
-  // Upload Images
-  // =====================================
+// Upload Images
+// =====================================
 
-  async uploadImages(
-    propertyId: string,
-    dto: UploadPropertyImagesDto,
-    user: any,
-  ) {
-    const property =
-      await this.prisma.property.findUnique({
-        where: {
-          id: propertyId,
-        },
-      });
+async uploadImages(
+  propertyId: string,
+  files: Express.Multer.File[],
+  isPrimary: boolean,
+  user: any,
+) {
+  const property =
+    await this.prisma.property.findUnique({
+      where: {
+        id: propertyId,
+      },
+    });
 
-    if (!property) {
-      throw new NotFoundException(
-        'Property not found.',
-      );
-    }
-
-    if (
-      property.ownerId !== user.id &&
-      user.role !== UserRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        'You are not allowed to upload images.',
-      );
-    }
-
-    const currentCount =
-      await this.prisma.propertyImage.count({
-        where: {
-          propertyId,
-        },
-      });
-
-    const images =
-      await this.prisma.$transaction(
-        dto.imageUrls.map((url, index) =>
-          this.prisma.propertyImage.create({
-            data: {
-              propertyId,
-              imageUrl: url,
-              displayOrder:
-                currentCount + index,
-              isPrimary:
-                currentCount === 0 &&
-                index === 0,
-            },
-          }),
-        ),
-      );
-
-    return {
-      success: true,
-      message: 'Images uploaded successfully.',
-      images,
-    };
+  if (!property) {
+    throw new NotFoundException(
+      'Property not found.',
+    );
   }
+
+  if (
+    property.ownerId !== user.id &&
+    user.role !== UserRole.ADMIN
+  ) {
+    throw new ForbiddenException(
+      'You are not allowed to upload images.',
+    );
+  }
+
+  if (!files || files.length === 0) {
+    throw new NotFoundException(
+      'No images uploaded.',
+    );
+  }
+
+  const currentCount =
+    await this.prisma.propertyImage.count({
+      where: {
+        propertyId,
+      },
+    });
+
+  const images =
+    await this.prisma.$transaction(
+      files.map((file, index) =>
+        this.prisma.propertyImage.create({
+          data: {
+            propertyId,
+            imageUrl: `/uploads/${file.filename}`,
+            displayOrder: currentCount + index,
+            isPrimary:
+              isPrimary &&
+              index === 0,
+          },
+        }),
+      ),
+    );
+
+  return {
+    success: true,
+    message: 'Images uploaded successfully.',
+    images,
+  };
+}
 
   // =====================================
   // Get Images

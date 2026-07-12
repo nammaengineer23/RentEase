@@ -1,42 +1,26 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBooleanString,
-  IsEnum,
-  IsNumberString,
-  IsOptional,
-  IsString,
-} from 'class-validator';
-
-import {
   FurnishingType,
+  PropertyStatus,
   PropertyType,
 } from '@prisma/client';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
-export class FilterPropertyDto {
-  // Pagination
-
+export class FilterPropertiesDto {
   @ApiPropertyOptional({
-    default: 1,
+    description: 'Search by title, city or locality',
   })
-  @IsOptional()
-  @IsNumberString()
-  page?: string;
-
-  @ApiPropertyOptional({
-    default: 10,
-  })
-  @IsOptional()
-  @IsNumberString()
-  limit?: string;
-
-  // Search
-
-  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   search?: string;
-
-  // Location
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -52,8 +36,6 @@ export class FilterPropertyDto {
   @IsOptional()
   @IsString()
   pincode?: string;
-
-  // Property
 
   @ApiPropertyOptional({
     enum: PropertyType,
@@ -71,68 +53,91 @@ export class FilterPropertyDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsNumberString()
-  bedrooms?: string;
+  @Type(() => Number)
+  @IsInt()
+  bedrooms?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsNumberString()
-  bathrooms?: string;
-
-  // Price
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumberString()
-  minPrice?: string;
+  @Type(() => Number)
+  @IsInt()
+  bathrooms?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsNumberString()
-  maxPrice?: string;
-
-  // Area
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumberString()
-  minArea?: string;
+  @Type(() => Number)
+  @IsInt()
+  minPrice?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsNumberString()
-  maxArea?: string;
-
-  // Features
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBooleanString()
-  parking?: string;
+  @Type(() => Number)
+  @IsInt()
+  maxPrice?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsBooleanString()
-  petFriendly?: string;
+  @Type(() => Number)
+  @IsInt()
+  minArea?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsBooleanString()
-  isAvailable?: string;
+  @Type(() => Number)
+  @IsInt()
+  maxArea?: number;
 
-  // Sorting
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  parking?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  petFriendly?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isAvailable?: boolean;
 
   @ApiPropertyOptional({
-    example: 'price',
+    enum: PropertyStatus,
+  })
+  @IsOptional()
+  @IsEnum(PropertyStatus)
+  status?: PropertyStatus;
+
+  @ApiPropertyOptional({
+    default: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page = 1;
+
+  @ApiPropertyOptional({
+    default: 10,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit = 10;
+
+  @ApiPropertyOptional({
+    example: 'createdAt',
   })
   @IsOptional()
   @IsString()
-  sortBy?: string;
+  sortBy = 'createdAt';
 
   @ApiPropertyOptional({
-    enum: ['asc', 'desc'],
+    example: 'desc',
   })
   @IsOptional()
   @IsString()
-  order?: 'asc' | 'desc';
+  order = 'desc';
 }
