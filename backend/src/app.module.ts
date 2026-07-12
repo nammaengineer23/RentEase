@@ -17,6 +17,7 @@ import { AmenitiesModule } from './modules/amenities/amenities.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { PropertyImagesModule } from './modules/property-images/property-images.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { PropertyVisitsModule } from './modules/property-visits/property-visits.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     PropertyImagesModule,
     FavoritesModule,
     FirebaseModule,
+    PropertyVisitsModule,
   ],
 
   controllers: [AppController],

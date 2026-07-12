@@ -25,6 +25,7 @@ model User {
 
   properties    Property[]
   favorites     Favorite[]
+  visits PropertyVisit[] @relation("TenantVisits")
   refreshTokens RefreshToken[]
 
   createdAt DateTime @default(now())
@@ -73,6 +74,8 @@ model Property {
   amenities PropertyAmenity[]
 
   images PropertyImage[]
+
+  visits PropertyVisit[]
 
   favorites Favorite[]
 
@@ -130,6 +133,29 @@ model Favorite {
   @@unique([userId, propertyId])
 }
 
+model PropertyVisit {
+  id            String        @id @default(cuid())
+
+  propertyId    String
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  tenantId      String
+  tenant        User          @relation("TenantVisits", fields: [tenantId], references: [id], onDelete: Cascade)
+
+  visitDate     DateTime
+
+  status        VisitStatus   @default(PENDING)
+
+  notes         String?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([propertyId])
+  @@index([tenantId])
+  @@index([visitDate])
+}
+
 model RefreshToken {
   id        String   @id @default(uuid())
   token     String   @unique
@@ -159,4 +185,12 @@ enum PropertyStatus {
   ACTIVE
   INACTIVE
   RENTED
+}
+
+enum VisitStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
 }
