@@ -1,42 +1,43 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import {
-  initializeApp,
   cert,
   getApps,
+  initializeApp,
 } from 'firebase-admin/app';
 
 import { getAuth } from 'firebase-admin/auth';
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 @Injectable()
 export class FirebaseService {
-  constructor() {
-    if (getApps().length === 0) {
-      const serviceAccount = JSON.parse(
-        readFileSync(
-          join(
-            process.cwd(),
-            'firebase',
-            'service-account.json',
-          ),
-          'utf8',
-        ),
-      );
-
+  constructor(
+    private readonly configService: ConfigService,
+  ) {
+    if (!getApps().length) {
       initializeApp({
-        credential: cert(serviceAccount),
+        credential: cert({
+          projectId: this.configService.get<string>(
+            'FIREBASE_PROJECT_ID',
+          ),
+          clientEmail: this.configService.get<string>(
+            'FIREBASE_CLIENT_EMAIL',
+          ),
+          privateKey: this.configService
+            .get<string>('FIREBASE_PRIVATE_KEY')
+            ?.replace(/\\n/g, '\n'),
+        }),
       });
 
-      console.log(
-        '✅ Firebase Admin initialized',
-      );
+      console.log('✅ Firebase Admin initialized');
     }
   }
 
+  getAuth() {
+    return getAuth();
+  }
+
   async verifyToken(idToken: string) {
-    return getAuth().verifyIdToken(idToken);
+    return this.getAuth().verifyIdToken(idToken);
   }
 }

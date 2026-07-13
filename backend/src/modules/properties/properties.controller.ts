@@ -28,6 +28,8 @@ import { UserRole } from '@prisma/client';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { FilterPropertiesDto } from './dto/filter-property.dto';
+
+
 @ApiTags('Properties')
 @Controller('properties')
 export class PropertiesController {

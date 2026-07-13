@@ -14,10 +14,10 @@ enum UserRole {
 }
 
 model User {
-  id       String   @id @default(uuid())
+  id       String @id @default(uuid())
   fullName String
-  email    String   @unique
-  phone    String   @unique
+  email    String @unique
+  phone    String @unique
 
   passwordHash String
 
@@ -25,8 +25,9 @@ model User {
 
   properties    Property[]
   favorites     Favorite[]
-  visits PropertyVisit[] @relation("TenantVisits")
+  visits        PropertyVisit[] @relation("TenantVisits")
   refreshTokens RefreshToken[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -109,9 +110,9 @@ model PropertyImage {
   imageUrl String
   publicId String?
 
-  isPrimary    Boolean @default(false)
-  
-  displayOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  displayOrder Int @default(0)
 
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
@@ -134,26 +135,43 @@ model Favorite {
 }
 
 model PropertyVisit {
-  id            String        @id @default(cuid())
+  id String @id @default(cuid())
 
-  propertyId    String
-  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
-  tenantId      String
-  tenant        User          @relation("TenantVisits", fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
+  tenant   User   @relation("TenantVisits", fields: [tenantId], references: [id], onDelete: Cascade)
 
-  visitDate     DateTime
+  visitDate DateTime
 
-  status        VisitStatus   @default(PENDING)
+  status VisitStatus @default(PENDING)
 
-  notes         String?
+  notes String?
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([propertyId])
   @@index([tenantId])
   @@index([visitDate])
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title String
+
+  message String
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model RefreshToken {
