@@ -20,6 +20,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { PropertyVisitsModule } from './modules/property-visits/property-visits.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { OwnerDashboardModule } from './modules/owner-dashboard/owner-dashboard.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     PropertyVisitsModule,
     NotificationsModule,
     ReviewsModule,
+    OwnerDashboardModule,
   ],
 
   controllers: [AppController],

@@ -81,278 +81,247 @@ export class PropertiesService {
   }
 
   // ===========================
-  // Get All Properties
-  // ===========================
+// Get All Properties
+// ===========================
 
-  async findAll(
-    filterDto: FilterPropertiesDto,
-  ) {
-    const {
-      page = '1',
-      limit = '10',
-      search,
-      city,
-      locality,
-      pincode,
-      propertyType,
-      furnishing,
-      bedrooms,
-      bathrooms,
-      minPrice,
-      maxPrice,
-      minArea,
-      maxArea,
-      parking,
-      petFriendly,
-      isAvailable,
-      sortBy = 'createdAt',
-      order = 'desc',
-    } = filterDto;
+async findAll(filterDto: FilterPropertiesDto) {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    city,
+    locality,
+    pincode,
+    propertyType,
+    furnishing,
+    bedrooms,
+    bathrooms,
+    minPrice,
+    maxPrice,
+    minArea,
+    maxArea,
+    parking,
+    petFriendly,
+    isAvailable,
+    sortBy = 'createdAt',
+    order = 'desc',
+  } = filterDto;
 
-    const where: Prisma.PropertyWhereInput =
-      {};
+  const where: Prisma.PropertyWhereInput = {};
 
-    // -------------------------
-    // Search
-    // -------------------------
+  // -----------------------
+  // Search
+  // -----------------------
 
-    if (search) {
-      where.OR = [
-        {
-          title: {
-            contains: search,
-            mode: 'insensitive',
-          },
+  if (search) {
+    where.OR = [
+      {
+        title: {
+          contains: search,
+          mode: 'insensitive',
         },
-        {
-          description: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          locality: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-        {
-          city: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-      ];
-    }
-
-    // -------------------------
-    // Location
-    // -------------------------
-
-    if (city) {
-      where.city = {
-        equals: city,
-        mode: 'insensitive',
-      };
-    }
-
-    if (locality) {
-      where.locality = {
-        contains: locality,
-        mode: 'insensitive',
-      };
-    }
-
-    if (pincode) {
-      where.pincode = pincode;
-    }
-
-    // -------------------------
-    // Property Details
-    // -------------------------
-
-    if (propertyType) {
-      where.propertyType = propertyType;
-    }
-
-    if (furnishing) {
-      where.furnishing = furnishing;
-    }
-
-    if (bedrooms) {
-      where.bedrooms = Number(
-        bedrooms,
-      );
-    }
-
-    if (bathrooms) {
-      where.bathrooms = Number(
-        bathrooms,
-      );
-    }
-
-    // -------------------------
-    // Price Filter
-    // -------------------------
-
-    if (minPrice || maxPrice) {
-      where.price = {};
-
-      if (minPrice) {
-        where.price.gte =
-          new Prisma.Decimal(
-            minPrice,
-          );
-      }
-
-      if (maxPrice) {
-        where.price.lte =
-          new Prisma.Decimal(
-            maxPrice,
-          );
-      }
-    }
-
-    // -------------------------
-    // Area Filter
-    // -------------------------
-
-    if (minArea || maxArea) {
-      where.area = {};
-
-      if (minArea) {
-        where.area.gte =
-          Number(minArea);
-      }
-
-      if (maxArea) {
-        where.area.lte =
-          Number(maxArea);
-      }
-    }
-
-    // -------------------------
-    // Features
-    // -------------------------
-
-   if (parking !== undefined) {
-  where.parking = parking;
-}
-
-    if (petFriendly !== undefined) {
-  where.petFriendly = petFriendly;
-}
-
-    if (isAvailable !== undefined) {
-  where.isAvailable = isAvailable;
-}
-
-    // -------------------------
-    // Pagination
-    // -------------------------
-
-    const pageNumber =
-      Number(page);
-
-    const limitNumber =
-      Number(limit);
-
-    const skip =
-      (pageNumber - 1) *
-      limitNumber;
-
-    // -------------------------
-    // Secure Sorting
-    // -------------------------
-
-    const allowedSortFields = [
-      'createdAt',
-      'price',
-      'area',
-      'bedrooms',
-      'bathrooms',
-    ];
-
-    const safeSortBy =
-      allowedSortFields.includes(
-        sortBy,
-      )
-        ? sortBy
-        : 'createdAt';
-
-    const safeOrder =
-      order === 'asc'
-        ? 'asc'
-        : 'desc';
-
-    const [properties, total] =
-      await this.prisma.$transaction([
-        this.prisma.property.findMany({
-          where,
-
-          include: {
-            owner: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                phone: true,
-              },
-            },
-
-            amenities: {
-              include: {
-                amenity: true,
-              },
-            },
-
-            images: {
-              orderBy: {
-                displayOrder:
-                  'asc',
-              },
-            },
-
-            _count: {
-              select: {
-                favorites: true,
-              },
-            },
-          },
-
-          orderBy: {
-            [safeSortBy]:
-              safeOrder,
-          },
-
-          skip,
-
-          take: limitNumber,
-        }),
-
-        this.prisma.property.count({
-          where,
-        }),
-      ]);
-
-    return {
-      success: true,
-
-      pagination: {
-        page: pageNumber,
-        limit: limitNumber,
-        total,
-
-        totalPages: Math.ceil(
-          total /
-            limitNumber,
-        ),
       },
+      {
+        city: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      {
+        locality: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+    ];
+  }
 
-      properties,
+  // -----------------------
+  // Location
+  // -----------------------
+
+  if (city) {
+    where.city = {
+      contains: city,
+      mode: 'insensitive',
     };
   }
 
+  if (locality) {
+    where.locality = {
+      contains: locality,
+      mode: 'insensitive',
+    };
+  }
+
+  if (pincode) {
+    where.pincode = pincode;
+  }
+
+  // -----------------------
+  // Property Details
+  // -----------------------
+
+  if (propertyType) {
+    where.propertyType = propertyType;
+  }
+
+  if (furnishing) {
+    where.furnishing = furnishing;
+  }
+
+  if (bedrooms !== undefined) {
+    where.bedrooms = bedrooms;
+  }
+
+  if (bathrooms !== undefined) {
+    where.bathrooms = bathrooms;
+  }
+
+  // -----------------------
+  // Price
+  // -----------------------
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {};
+
+    if (minPrice !== undefined) {
+      where.price.gte = minPrice;
+    }
+
+    if (maxPrice !== undefined) {
+      where.price.lte = maxPrice;
+    }
+  }
+
+  // -----------------------
+  // Area
+  // -----------------------
+
+  if (minArea !== undefined || maxArea !== undefined) {
+    where.area = {};
+
+    if (minArea !== undefined) {
+      where.area.gte = minArea;
+    }
+
+    if (maxArea !== undefined) {
+      where.area.lte = maxArea;
+    }
+  }
+
+  // -----------------------
+  // Booleans
+  // -----------------------
+
+  if (parking !== undefined) {
+    where.parking = parking;
+  }
+
+  if (petFriendly !== undefined) {
+    where.petFriendly = petFriendly;
+  }
+
+  if (isAvailable !== undefined) {
+    where.isAvailable = isAvailable;
+  }
+
+ 
+  // -----------------------
+  // Pagination
+  // -----------------------
+
+  const skip = (page - 1) * limit;
+
+  const [properties, total] = await this.prisma.$transaction([
+    this.prisma.property.findMany({
+      where,
+
+      skip,
+
+      take: limit,
+
+      orderBy: {
+        [sortBy]: order,
+      },
+
+      include: {
+        owner: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+
+        images: {
+          orderBy: {
+            displayOrder: 'asc',
+          },
+        },
+
+        amenities: {
+          include: {
+            amenity: true,
+          },
+        },
+
+        favorites: true,
+
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+
+    this.prisma.property.count({
+      where,
+    }),
+  ]);
+
+  // -----------------------
+  // Average Rating
+  // -----------------------
+
+  const data = properties.map((property) => {
+    const totalRating = property.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0,
+    );
+
+    const averageRating =
+      property.reviews.length > 0
+        ? Number((totalRating / property.reviews.length).toFixed(1))
+        : 0;
+
+    return {
+      ...property,
+      averageRating,
+      totalReviews: property.reviews.length,
+    };
+  });
+
+  return {
+    success: true,
+
+    data,
+
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
     // ===========================
   // Get Property By Id
   // ===========================

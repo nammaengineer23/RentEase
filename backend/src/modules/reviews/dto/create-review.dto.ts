@@ -7,15 +7,14 @@ export class CreateReviewDto {
     default: 5,
     minimum: 1,
     maximum: 5,
-    description: 'Rating between 1 and 5',
   })
   @IsInt()
   @Min(1)
   @Max(5)
-  rating!: number;
+  rating: number = 5;
 
   @ApiPropertyOptional({
-    example: 'Very clean property and friendly owner.',
+    example: 'Very clean property.',
   })
   @IsOptional()
   @IsString()

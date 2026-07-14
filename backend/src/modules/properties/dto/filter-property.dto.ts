@@ -9,11 +9,11 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Min,
 } from 'class-validator';
-
 export class FilterPropertiesDto {
   @ApiPropertyOptional({
     description: 'Search by title, city or locality',
@@ -66,25 +66,25 @@ export class FilterPropertiesDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   minPrice?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+ @IsNumber()
   maxPrice?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   minArea?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
-  @IsInt()
+  @IsNumber()
   maxArea?: number;
 
   @ApiPropertyOptional()
