@@ -91,6 +91,76 @@ export class OwnerDashboardService {
     };
   }
 
+// ==========================
+// Owner Activity Feed
+// ==========================
+async getActivity(ownerId: string) {
+  const properties = await this.prisma.property.findMany({
+    where: {
+      ownerId,
+    },
+    include: {
+      visits: {
+        include: {
+          tenant: true,
+        },
+      },
+      reviews: {
+        include: {
+          user: true,
+        },
+      },
+      favorites: {
+        include: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  const activities: any[] = [];
+
+  for (const property of properties) {
+    // Visits
+    for (const visit of property.visits) {
+      activities.push({
+        type: 'VISIT',
+        title: `${visit.tenant.fullName} requested a property visit`,
+        property: property.title,
+        status: visit.status,
+        createdAt: visit.createdAt,
+      });
+    }
+
+    // Reviews
+    for (const review of property.reviews) {
+      activities.push({
+        type: 'REVIEW',
+        title: `${review.user.fullName} rated ${review.rating}★`,
+        property: property.title,
+        status: 'COMPLETED',
+        createdAt: review.createdAt,
+      });
+    }
+
+    // Favorites
+    for (const favorite of property.favorites) {
+      activities.push({
+        type: 'FAVORITE',
+        title: `${favorite.user.fullName} added your property to favorites`,
+        property: property.title,
+        status: 'ACTIVE',
+        createdAt: favorite.createdAt,
+      });
+    }
+  }
+
+  return activities.sort(
+    (a, b) =>
+      b.createdAt.getTime() - a.createdAt.getTime(),
+  );
+}
+
   // ==========================
   // Owner Properties
   // ==========================

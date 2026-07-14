@@ -20,15 +20,9 @@ export class OwnerDashboardController {
     private readonly ownerDashboardService: OwnerDashboardService,
   ) {}
 
-  @Get('properties')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-getMyProperties(
-  @CurrentUser() user: any,
-) {
-  return this.ownerDashboardService.getMyProperties(user.id);
-}
-
+  // ==========================
+  // Dashboard Summary
+  // ==========================
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -39,5 +33,32 @@ getMyProperties(
       user.id,
     );
   }
-}
 
+  // ==========================
+  // Owner Properties
+  // ==========================
+  @Get('properties')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  getMyProperties(
+    @CurrentUser() user: any,
+  ) {
+    return this.ownerDashboardService.getMyProperties(
+      user.id,
+    );
+  }
+
+  // ==========================
+  // Owner Activity Feed
+  // ==========================
+  @Get('activity')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  getActivity(
+    @CurrentUser() user: any,
+  ) {
+    return this.ownerDashboardService.getActivity(
+      user.id,
+    );
+  }
+}
