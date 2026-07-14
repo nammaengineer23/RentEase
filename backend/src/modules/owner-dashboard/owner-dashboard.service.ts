@@ -91,75 +91,72 @@ export class OwnerDashboardService {
     };
   }
 
-// ==========================
-// Owner Activity Feed
-// ==========================
-async getActivity(ownerId: string) {
-  const properties = await this.prisma.property.findMany({
-    where: {
-      ownerId,
-    },
-    include: {
-      visits: {
-        include: {
-          tenant: true,
+  // ==========================
+  // Owner Activity Feed
+  // ==========================
+  async getActivity(ownerId: string) {
+    const properties = await this.prisma.property.findMany({
+      where: {
+        ownerId,
+      },
+      include: {
+        visits: {
+          include: {
+            tenant: true,
+          },
+        },
+        reviews: {
+          include: {
+            user: true,
+          },
+        },
+        favorites: {
+          include: {
+            user: true,
+          },
         },
       },
-      reviews: {
-        include: {
-          user: true,
-        },
-      },
-      favorites: {
-        include: {
-          user: true,
-        },
-      },
-    },
-  });
+    });
 
-  const activities: any[] = [];
+    const activities: any[] = [];
 
-  for (const property of properties) {
-    // Visits
-    for (const visit of property.visits) {
-      activities.push({
-        type: 'VISIT',
-        title: `${visit.tenant.fullName} requested a property visit`,
-        property: property.title,
-        status: visit.status,
-        createdAt: visit.createdAt,
-      });
+    for (const property of properties) {
+      for (const visit of property.visits) {
+        activities.push({
+          type: 'VISIT',
+          title: `${visit.tenant.fullName} requested a property visit`,
+          property: property.title,
+          status: visit.status,
+          createdAt: visit.createdAt,
+        });
+      }
+
+      for (const review of property.reviews) {
+        activities.push({
+          type: 'REVIEW',
+          title: `${review.user.fullName} rated ${review.rating}★`,
+          property: property.title,
+          status: 'COMPLETED',
+          createdAt: review.createdAt,
+        });
+      }
+
+      for (const favorite of property.favorites) {
+        activities.push({
+          type: 'FAVORITE',
+          title: `${favorite.user.fullName} added your property to favorites`,
+          property: property.title,
+          status: 'ACTIVE',
+          createdAt: favorite.createdAt,
+        });
+      }
     }
 
-    // Reviews
-    for (const review of property.reviews) {
-      activities.push({
-        type: 'REVIEW',
-        title: `${review.user.fullName} rated ${review.rating}★`,
-        property: property.title,
-        status: 'COMPLETED',
-        createdAt: review.createdAt,
-      });
-    }
-
-    // Favorites
-    for (const favorite of property.favorites) {
-      activities.push({
-        type: 'FAVORITE',
-        title: `${favorite.user.fullName} added your property to favorites`,
-        property: property.title,
-        status: 'ACTIVE',
-        createdAt: favorite.createdAt,
-      });
-    }
+    return activities.sort(
+      (a, b) =>
+        b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
-
-  return activities.sort(
-    (a, b) =>
-      b.createdAt.getTime() - a.createdAt.getTime(),
-  );
-}
 
   // ==========================
   // Owner Properties
@@ -215,22 +212,97 @@ async getActivity(ownerId: string) {
         locality: property.locality,
         price: property.price,
         isAvailable: property.isAvailable,
-
         averageRating,
         totalReviews,
-
         totalFavorites: property.favorites.length,
-
         pendingVisits,
         completedVisits,
-
         primaryImage:
           property.images.length > 0
             ? property.images[0].imageUrl
             : null,
-
         createdAt: property.createdAt,
       };
     });
+  }
+
+  // ==========================
+  // Owner Analytics
+  // ==========================
+  async getAnalytics(ownerId: string) {
+    const summary = await this.getDashboard(ownerId);
+
+    const properties = await this.prisma.property.findMany({
+      where: {
+        ownerId,
+      },
+      include: {
+        visits: true,
+        favorites: true,
+        reviews: true,
+      },
+    });
+
+    const monthlyVisits = Array(12).fill(0);
+    const monthlyFavorites = Array(12).fill(0);
+    const monthlyReviews = Array(12).fill(0);
+
+    for (const property of properties) {
+      property.visits.forEach((visit) => {
+        monthlyVisits[
+          new Date(visit.createdAt).getMonth()
+        ]++;
+      });
+
+      property.favorites.forEach((favorite) => {
+        monthlyFavorites[
+          new Date(favorite.createdAt).getMonth()
+        ]++;
+      });
+
+      property.reviews.forEach((review) => {
+        monthlyReviews[
+          new Date(review.createdAt).getMonth()
+        ]++;
+      });
+    }
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return {
+      summary,
+
+      monthlyVisits: months.map((month, index) => ({
+        month,
+        count: monthlyVisits[index],
+      })),
+
+      monthlyFavorites: months.map(
+        (month, index) => ({
+          month,
+          count: monthlyFavorites[index],
+        }),
+      ),
+
+      monthlyReviews: months.map(
+        (month, index) => ({
+          month,
+          count: monthlyReviews[index],
+        }),
+      ),
+    };
   }
 }

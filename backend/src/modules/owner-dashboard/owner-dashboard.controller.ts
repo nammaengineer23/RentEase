@@ -34,6 +34,20 @@ export class OwnerDashboardController {
     );
   }
 
+// ==========================
+// Analytics Dashboard
+// ==========================
+@Get('analytics')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+getAnalytics(
+  @CurrentUser() user: any,
+) {
+  return this.ownerDashboardService.getAnalytics(
+    user.id,
+  );
+}
+  
   // ==========================
   // Owner Properties
   // ==========================

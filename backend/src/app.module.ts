@@ -21,6 +21,8 @@ import { PropertyVisitsModule } from './modules/property-visits/property-visits.
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { OwnerDashboardModule } from './modules/owner-dashboard/owner-dashboard.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { PushNotificationsModule } from './modules/push-notifications/push-notifications.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { OwnerDashboardModule } from './modules/owner-dashboard/owner-dashboard.
     NotificationsModule,
     ReviewsModule,
     OwnerDashboardModule,
+    ChatModule,
+    PushNotificationsModule,
   ],
 
   controllers: [AppController],
