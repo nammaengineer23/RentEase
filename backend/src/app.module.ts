@@ -19,6 +19,7 @@ import { PropertyImagesModule } from './modules/property-images/property-images.
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { PropertyVisitsModule } from './modules/property-visits/property-visits.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     FirebaseModule,
     PropertyVisitsModule,
     NotificationsModule,
+    ReviewsModule,
   ],
 
   controllers: [AppController],

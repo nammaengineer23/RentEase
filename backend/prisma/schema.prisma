@@ -28,6 +28,7 @@ model User {
   visits        PropertyVisit[] @relation("TenantVisits")
   refreshTokens RefreshToken[]
   notifications Notification[]
+  reviews Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,6 +80,7 @@ model Property {
   visits PropertyVisit[]
 
   favorites Favorite[]
+  reviews Review[]
 
   createdAt DateTime @default(now())
 
@@ -132,6 +134,26 @@ model Favorite {
   createdAt DateTime @default(now())
 
   @@unique([userId, propertyId])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  rating Int
+
+  comment String?
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  propertyId String
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, propertyId])
+  @@index([propertyId])
 }
 
 model PropertyVisit {
