@@ -8,6 +8,8 @@ import {
 } from 'firebase-admin/app';
 
 import { getAuth } from 'firebase-admin/auth';
+import { getMessaging } from 'firebase-admin/messaging';
+
 
 @Injectable()
 export class FirebaseService {
@@ -33,9 +35,57 @@ export class FirebaseService {
     }
   }
 
+  getMessaging() {
+  return getMessaging();
+}
+
   getAuth() {
     return getAuth();
   }
+
+  // ==========================
+// Send Push Notification
+// ==========================
+async sendToDevice(
+  token: string,
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+) {
+  return this.getMessaging().send({
+    token,
+    notification: {
+      title,
+      body,
+    },
+    data,
+  });
+}
+
+// ==========================
+// Send Multicast Notification
+// ==========================
+async sendToDevices(
+  tokens: string[],
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+) {
+  if (tokens.length === 0) {
+    return;
+  }
+
+  return this.getMessaging().sendEachForMulticast({
+    tokens,
+    notification: {
+      title,
+      body,
+    },
+    data,
+  });
+}
+
+
 
   async verifyToken(idToken: string) {
     return this.getAuth().verifyIdToken(idToken);
