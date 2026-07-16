@@ -14,14 +14,28 @@ import {
 } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
-
+import helmet from 'helmet';
 import { GlobalExceptionFilter } from './common/filters/global-exception/global-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(helmet());
 
+app.enableCors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:8080',
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+  ],
+});
   app.setGlobalPrefix('api/v1');
 
   app.useGlobalPipes(
@@ -67,8 +81,9 @@ async function bootstrap() {
     document,
   );
 
-  await app.listen(3000);
-
+await app.listen(
+  process.env.PORT || 3000,
+);
   console.log('🚀 RentEase Backend Running');
   console.log(
     '🌐 API: http://localhost:3000/api/v1',

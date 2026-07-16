@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { FirebaseModule } from './firebase/firebase.module';
 import { join } from 'path';
-
+import * as Joi from 'joi';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -27,15 +27,46 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { HealthModule } from './modules/health/health.module';
 
 
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+  isGlobal: true,
+  envFilePath: '.env',
+
+  validationSchema: Joi.object({
+    DATABASE_URL: Joi.string().required(),
+
+    JWT_ACCESS_SECRET: Joi.string()
+     .min(16)
+     .required(),
+
+    JWT_REFRESH_SECRET: Joi.string()
+     .min(16)
+     .required(),
+
+    FIREBASE_PROJECT_ID: Joi.string().required(),
+
+    FIREBASE_CLIENT_EMAIL: Joi.string()
+      .email()
+      .required(),
+
+    FIREBASE_PRIVATE_KEY: Joi.string().required(),
+
+    PORT: Joi.number().default(3000),
+
+    NODE_ENV: Joi.string()
+      .valid(
+        'development',
+        'production',
+        'test',
+      )
+      .default('development'),
+  }),
+}),
 
     ThrottlerModule.forRoot([
   {
@@ -66,6 +97,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
     ChatModule,
     PushNotificationsModule,
     AdminModule,
+    HealthModule,
   ],
 
   controllers: [AppController],
