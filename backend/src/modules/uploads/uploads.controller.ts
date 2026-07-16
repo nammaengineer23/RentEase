@@ -10,7 +10,7 @@ import {
 } from '@nestjs/platform-express';
 
 import {
-  diskStorage,
+  memoryStorage,
 } from 'multer';
 
 import {
@@ -20,10 +20,6 @@ import {
 import {
   UploadsService,
 } from './uploads.service';
-
-import {
-  generateFileName,
-} from '../../common/utils/file.util';
 
 
 @Controller('uploads')
@@ -38,24 +34,8 @@ export class UploadsController {
     FileInterceptor(
       'file',
       {
-        storage: diskStorage({
-          destination: './uploads',
-          filename: (
-            req,
-            file,
-            callback,
-          ) => {
-            const filename =
-              generateFileName(
-                file.originalname,
-              );
+        storage: memoryStorage(),
 
-            callback(
-              null,
-              filename,
-            );
-          },
-        }),
         limits: {
           fileSize:
             5 * 1024 * 1024, // 5MB

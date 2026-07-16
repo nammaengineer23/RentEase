@@ -4,9 +4,17 @@ import {
 } from '@nestjs/common';
 
 import { ImageFileValidator } from '../../common/validators/image-file.validator';
+import { FirebaseService } from '../../firebase/firebase.service';
+
 
 @Injectable()
 export class UploadsService {
+
+ constructor(
+    private readonly firebaseService: FirebaseService,
+  ) {}
+
+
   async uploadImage(
     file: Express.Multer.File,
   ) {
@@ -25,15 +33,16 @@ export class UploadsService {
       );
     }
 
-    const imageUrl = `http://localhost:3000/uploads/${file.filename}`;
+    const uploadResult =
+  await this.firebaseService.uploadImage(file);
 
-        return {
-           success: true,
-            imageUrl,
-            filename: file.filename,
-            originalName: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-      };
+return {
+  success: true,
+  imageUrl: uploadResult.imageUrl,
+  filename: uploadResult.fileName,
+  originalName: file.originalname,
+  mimetype: file.mimetype,
+  size: file.size,
+};
   }
 }

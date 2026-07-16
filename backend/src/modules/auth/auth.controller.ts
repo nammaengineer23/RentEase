@@ -59,16 +59,13 @@ refresh(
   );
 }
 
-  @Get('me')
+ @Get('me')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 @ApiOperation({
   summary: 'Get current user',
 })
 getCurrentUser(@Request() req: any) {
-  return {
-    success: true,
-    user: req.user,
-  };
+  return req.user;
 }
 }

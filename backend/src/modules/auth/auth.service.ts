@@ -94,17 +94,21 @@ export class AuthService {
     );
   }
 
-  const accessToken = await this.jwtService.signAsync({
-    sub: user.id,
-    email: user.email,
-    role: user.role,
-  });
+  const tokens = await this.generateTokens(
+  user.id,
+  user.email,
+);
 
-  return {
-    success: true,
-    message: 'Login successful.',
-    accessToken,
-    user: {
+await this.saveRefreshToken(
+  user.id,
+  tokens.refreshToken,
+);
+
+return {
+  success: true,
+  message: 'Login successful.',
+  ...tokens,
+  user: {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
