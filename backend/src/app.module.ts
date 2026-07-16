@@ -23,6 +23,12 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { OwnerDashboardModule } from './modules/owner-dashboard/owner-dashboard.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { PushNotificationsModule } from './modules/push-notifications/push-notifications.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
+
+
 
 @Module({
   imports: [
@@ -30,6 +36,13 @@ import { PushNotificationsModule } from './modules/push-notifications/push-notif
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    ThrottlerModule.forRoot([
+  {
+    ttl: 60_000,
+    limit: 100,
+  },
+ ]),
 
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
@@ -52,10 +65,18 @@ import { PushNotificationsModule } from './modules/push-notifications/push-notif
     OwnerDashboardModule,
     ChatModule,
     PushNotificationsModule,
+    AdminModule,
   ],
 
   controllers: [AppController],
 
-  providers: [AppService],
+  providers: [
+  AppService,
+  {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  },
+],
+
 })
 export class AppModule {}

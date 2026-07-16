@@ -16,6 +16,7 @@ model User {
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
   passwordHash       String
+  isActive Boolean @default(true)
   favorites          Favorite[]
   notifications      Notification[]
   properties         Property[]
