@@ -5,16 +5,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { UserRole } from '@prisma/client';
-
+import { FirebaseService } from '../../firebase/firebase.service';
 import { UploadPropertyImagesDto } from './dto/upload-property-images.dto';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
 
 @Injectable()
 export class PropertyImagesService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
-
+ constructor(
+  private readonly prisma: PrismaService,
+  private readonly firebaseService: FirebaseService,
+) {}
   // =====================================
 // Upload Images
 // =====================================
@@ -60,21 +60,29 @@ async uploadImages(
       },
     });
 
-  const images =
-    await this.prisma.$transaction(
-      files.map((file, index) =>
-        this.prisma.propertyImage.create({
-          data: {
-            propertyId,
-            imageUrl: `/uploads/${file.filename}`,
-            displayOrder: currentCount + index,
-            isPrimary:
-              isPrimary &&
-              index === 0,
-          },
-        }),
-      ),
+  const images = [];
+
+for (let index = 0; index < files.length; index++) {
+  const file = files[index];
+
+  const uploadResult =
+    await this.firebaseService.uploadImage(
+      file,
+      'properties',
     );
+
+  const image =
+    await this.prisma.propertyImage.create({
+      data: {
+        propertyId,
+        imageUrl: uploadResult.imageUrl,
+        displayOrder: currentCount + index,
+        isPrimary: isPrimary && index === 0,
+      },
+    });
+
+  images.push(image);
+}
 
   return {
     success: true,

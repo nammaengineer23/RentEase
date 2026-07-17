@@ -19,7 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
-
+import { memoryStorage } from 'multer';
 import { PropertyImagesService } from './property-images.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ReorderImagesDto } from './dto/reorder-images.dto';
@@ -59,8 +59,16 @@ export class PropertyImagesController {
       },
     },
   })
-  @UseInterceptors(FilesInterceptor('files', 10))
-  uploadImages(
+@UseInterceptors(
+  FilesInterceptor('files', 10, {
+    storage: memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024,
+    },
+  }),
+)
+
+uploadImages(
     @Param('propertyId')
     propertyId: string,
 

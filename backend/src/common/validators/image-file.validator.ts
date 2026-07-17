@@ -18,6 +18,7 @@ export class ImageFileValidator extends FileValidator {
       'image/jpeg',
       'image/png',
       'image/webp',
+      'image/gif',
     ];
 
     return (
@@ -27,6 +28,5 @@ export class ImageFileValidator extends FileValidator {
   }
 
   buildErrorMessage(): string {
-    return 'Invalid image file. Only JPG, PNG, WEBP files under 5MB are allowed.';
-  }
+return 'Invalid image file. Only JPG, JPEG, PNG, WEBP and GIF files under 5MB are allowed.';  }
 }
