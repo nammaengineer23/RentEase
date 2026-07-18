@@ -39,7 +39,7 @@ export class UploadsService {
 return {
   success: true,
   imageUrl: uploadResult.imageUrl,
-  filename: uploadResult.fileName,
+  filename: uploadResult.publicId,
   originalName: file.originalname,
   mimetype: file.mimetype,
   size: file.size,

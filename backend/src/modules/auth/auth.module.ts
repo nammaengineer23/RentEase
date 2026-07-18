@@ -7,11 +7,14 @@ import { FirebaseModule } from '../../firebase/firebase.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailModule } from '../../mail/mail.module';
+
 
 @Module({
   imports: [
     ConfigModule,
     FirebaseModule,
+    MailModule,
     PassportModule.register({
       defaultStrategy: 'jwt',
     }),

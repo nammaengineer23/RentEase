@@ -28,6 +28,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { HealthModule } from './modules/health/health.module';
+import { MailModule } from './mail/mail.module';
 
 
 
@@ -98,6 +99,7 @@ import { HealthModule } from './modules/health/health.module';
     PushNotificationsModule,
     AdminModule,
     HealthModule,
+    MailModule,
   ],
 
   controllers: [AppController],

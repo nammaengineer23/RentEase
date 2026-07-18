@@ -15,6 +15,9 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { FirebaseLoginDto } from './dto/firebase-login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -56,6 +59,40 @@ refresh(
 ) {
   return this.authService.refreshToken(
     dto.refreshToken,
+  );
+}
+
+// =====================================
+// Forgot Password
+// =====================================
+
+@Post('forgot-password')
+@ApiOperation({
+  summary: 'Send password reset email',
+})
+forgotPassword(
+  @Body()
+  dto: ForgotPasswordDto,
+) {
+  return this.authService.forgotPassword(
+    dto,
+  );
+}
+
+// =====================================
+// Reset Password
+// =====================================
+
+@Post('reset-password')
+@ApiOperation({
+  summary: 'Reset password',
+})
+resetPassword(
+  @Body()
+  dto: ResetPasswordDto,
+) {
+  return this.authService.resetPassword(
+    dto,
   );
 }
 

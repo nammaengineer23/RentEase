@@ -10,6 +10,10 @@ import { FirebaseService } from '../../firebase/firebase.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { MailService } from '../../mail/mail.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
 
 @Injectable()
 export class AuthService {
@@ -17,6 +21,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private firebaseService: FirebaseService,
+    private mailService: MailService,
   ) {}
 
   //---------------------------------------
@@ -47,6 +52,22 @@ export class AuthService {
     const tokens = await this.generateTokens(user.id, user.email);
 
     await this.saveRefreshToken(user.id, tokens.refreshToken);
+    
+    // ======================================
+// Send Welcome Email
+// ======================================
+
+try {
+  await this.mailService.sendWelcomeEmail(
+    user.email,
+    user.fullName,
+  );
+} catch (error) {
+  console.error(
+    'Failed to send welcome email:',
+    error,
+  );
+}
 
     return {
       message: 'Registration successful',
@@ -287,6 +308,64 @@ private async saveRefreshToken(
     },
   });
 }
+
+//---------------------------------------
+// Forgot Password
+//---------------------------------------
+async forgotPassword(
+  dto: ForgotPasswordDto,
+) {
+  const user =
+    await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+  // Don't reveal whether the email exists
+  if (!user) {
+    return {
+      success: true,
+      message:
+        'If the email exists, a password reset link has been sent.',
+    };
+  }
+
+  const resetToken =
+    await this.jwtService.signAsync(
+      {
+        sub: user.id,
+        email: user.email,
+        type: 'password-reset',
+      },
+      {
+        secret: process.env.JWT_ACCESS_SECRET,
+        expiresIn: '15m',
+      },
+    );
+
+  const resetLink =
+    `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+  try {
+    await this.mailService.sendForgotPasswordEmail(
+      user.email,
+      user.fullName,
+      resetLink,
+    );
+  } catch (error) {
+    console.error(
+      'Failed to send reset email:',
+      error,
+    );
+  }
+
+  return {
+    success: true,
+    message:
+      'If the email exists, a password reset link has been sent.',
+  };
+}
   //---------------------------------------
   // Generate JWT Tokens
   //---------------------------------------
@@ -315,6 +394,43 @@ private async saveRefreshToken(
     };
   }
 
+ 
+
+//---------------------------------------
+// Reset Password
+//---------------------------------------
+async resetPassword(dto: ResetPasswordDto) {
+  const payload = await this.jwtService.verifyAsync(dto.token, {
+    secret: process.env.JWT_ACCESS_SECRET,
+  });
+
+  if (payload.type !== 'password-reset') {
+    throw new UnauthorizedException('Invalid reset token.');
+  }
+
+  const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+  await this.prisma.user.update({
+    where: {
+      id: payload.sub,
+    },
+    data: {
+      passwordHash: hashedPassword,
+    },
+  });
+
+  // Invalidate all refresh tokens
+  await this.prisma.refreshToken.deleteMany({
+    where: {
+      userId: payload.sub,
+    },
+  });
+
+  return {
+    success: true,
+    message: 'Password updated successfully.',
+  };
+}
 
   //---------------------------------------
   // Validate User
