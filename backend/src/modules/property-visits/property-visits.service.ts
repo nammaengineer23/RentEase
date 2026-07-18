@@ -14,11 +14,14 @@ import {
 
 import { CreatePropertyVisitDto } from './dto/create-property-visit.dto';
 import { UpdatePropertyVisitDto } from './dto/update-property-visit.dto';
+import { MailService } from '../../mail/mail.service';
+
 
 @Injectable()
 export class PropertyVisitsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
   ) {}
 
   // =====================================
@@ -77,21 +80,42 @@ export class PropertyVisitsService {
     }
 
     const visit =
-      await this.prisma.propertyVisit.create({
-        data: {
-          propertyId: dto.propertyId,
-          tenantId: user.id,
-          visitDate,
-          notes: dto.notes,
-        },
-      });
+  await this.prisma.propertyVisit.create({
+    data: {
+      propertyId: dto.propertyId,
+      tenantId: user.id,
+      visitDate,
+      notes: dto.notes,
+    },
+    include: {
+      property: true,
+      tenant: true,
+    },
+  });
 
-    return {
-      success: true,
-      message:
-        'Visit request created successfully.',
-      data: visit,
-    };
+// ======================================
+// Send Booking Email
+// ======================================
+
+try {
+  await this.mailService.sendVisitBookingEmail(
+    visit.tenant.email,
+    visit.tenant.fullName,
+    visit.property.title,
+    visit.visitDate.toLocaleString(),
+  );
+} catch (error) {
+  console.error(
+    'Failed to send booking email:',
+    error,
+  );
+}
+
+return {
+  success: true,
+  message: 'Visit request created successfully.',
+  data: visit,
+};
   }
 
   // =====================================
@@ -178,14 +202,43 @@ export class PropertyVisitsService {
       );
     }
 
-    return this.prisma.propertyVisit.update({
-      where: {
-        id,
-      },
-      data: {
-        status: VisitStatus.APPROVED,
-      },
-    });
+    const updatedVisit =
+  await this.prisma.propertyVisit.update({
+    where: {
+      id,
+    },
+    data: {
+      status: VisitStatus.APPROVED,
+    },
+    include: {
+      property: true,
+      tenant: true,
+    },
+  });
+
+// ======================================
+// Send Approval Email
+// ======================================
+
+try {
+  await this.mailService.sendVisitApprovalEmail(
+    updatedVisit.tenant.email,
+    updatedVisit.tenant.fullName,
+    updatedVisit.property.title,
+    updatedVisit.visitDate.toLocaleString(),
+  );
+} catch (error) {
+  console.error(
+    'Failed to send approval email:',
+    error,
+  );
+}
+
+return {
+  success: true,
+  message: 'Visit approved successfully.',
+  data: updatedVisit,
+};
   }
 
   // =====================================
@@ -208,14 +261,42 @@ export class PropertyVisitsService {
       );
     }
 
-    return this.prisma.propertyVisit.update({
-      where: {
-        id,
-      },
-      data: {
-        status: VisitStatus.REJECTED,
-      },
-    });
+   const updatedVisit =
+  await this.prisma.propertyVisit.update({
+    where: {
+      id,
+    },
+    data: {
+      status: VisitStatus.REJECTED,
+    },
+    include: {
+      property: true,
+      tenant: true,
+    },
+  });
+
+// ======================================
+// Send Rejection Email
+// ======================================
+
+try {
+  await this.mailService.sendVisitRejectedEmail(
+    updatedVisit.tenant.email,
+    updatedVisit.tenant.fullName,
+    updatedVisit.property.title,
+  );
+} catch (error) {
+  console.error(
+    'Failed to send rejection email:',
+    error,
+  );
+}
+
+return {
+  success: true,
+  message: 'Visit rejected successfully.',
+  data: updatedVisit,
+};
   }
 
   // =====================================
@@ -238,14 +319,42 @@ export class PropertyVisitsService {
       );
     }
 
-    return this.prisma.propertyVisit.update({
-      where: {
-        id,
-      },
-      data: {
-        status: VisitStatus.COMPLETED,
-      },
-    });
+    const updatedVisit =
+  await this.prisma.propertyVisit.update({
+    where: {
+      id,
+    },
+    data: {
+      status: VisitStatus.COMPLETED,
+    },
+    include: {
+      property: true,
+      tenant: true,
+    },
+  });
+
+// ======================================
+// Send Completion Email
+// ======================================
+
+try {
+  await this.mailService.sendVisitCompletedEmail(
+    updatedVisit.tenant.email,
+    updatedVisit.tenant.fullName,
+    updatedVisit.property.title,
+  );
+} catch (error) {
+  console.error(
+    'Failed to send completion email:',
+    error,
+  );
+}
+
+return {
+  success: true,
+  message: 'Visit completed successfully.',
+  data: updatedVisit,
+};
   }
 
   // =====================================
@@ -269,14 +378,42 @@ export class PropertyVisitsService {
       );
     }
 
-    return this.prisma.propertyVisit.update({
-      where: {
-        id,
-      },
-      data: {
-        status: VisitStatus.CANCELLED,
-      },
-    });
+    const updatedVisit =
+  await this.prisma.propertyVisit.update({
+    where: {
+      id,
+    },
+    data: {
+      status: VisitStatus.CANCELLED,
+    },
+    include: {
+      property: true,
+      tenant: true,
+    },
+  });
+
+// ======================================
+// Send Cancellation Email
+// ======================================
+
+try {
+  await this.mailService.sendVisitCancelledEmail(
+    updatedVisit.tenant.email,
+    updatedVisit.tenant.fullName,
+    updatedVisit.property.title,
+  );
+} catch (error) {
+  console.error(
+    'Failed to send cancellation email:',
+    error,
+  );
+}
+
+return {
+  success: true,
+  message: 'Visit cancelled successfully.',
+  data: updatedVisit,
+};
   }
 
   // =====================================
