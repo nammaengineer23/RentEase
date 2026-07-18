@@ -210,7 +210,7 @@ export class OwnerDashboardService {
         title: property.title,
         city: property.city,
         locality: property.locality,
-        price: property.price,
+        price: Number(property.price),
         isAvailable: property.isAvailable,
         averageRating,
         totalReviews,

@@ -54,9 +54,9 @@ model Property {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   landmark        String?
-  latitude        Float?
+  latitude        Decimal? @db.Decimal(9,6)
+  longitude       Decimal? @db.Decimal(9,6)
   locality        String?
-  longitude       Float?
   displayOrder    Int               @default(0)
   favorites       Favorite[]
   owner           User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)

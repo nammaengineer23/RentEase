@@ -16,7 +16,7 @@ import {
 
 export class CreatePropertyDto {
   @ApiProperty({
-    example: 'Luxury 2 BHK Apartment',
+    example: '',
   })
   @IsString()
   title!: string;

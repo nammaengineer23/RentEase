@@ -39,12 +39,12 @@ app.enableCors({
   app.setGlobalPrefix('api/v1');
 
   app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+  new ValidationPipe({
+    whitelist: true,
+    transform: true,
+    forbidNonWhitelisted: true,
+  }),
+);
 
   // Global Exception Filter
   app.useGlobalFilters(

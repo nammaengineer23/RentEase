@@ -68,6 +68,20 @@ export class PropertiesController {
     );
   }
 
+  // ===========================
+// Owner - My Properties
+// ===========================
+
+@Get('my-properties')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: 'Get logged-in owner properties',
+})
+findMyProperties(@Request() req: any) {
+  return this.propertiesService.findMyProperties(req.user);
+}
+
   // Get Property By Id
   @Get(':id')
   @ApiOperation({

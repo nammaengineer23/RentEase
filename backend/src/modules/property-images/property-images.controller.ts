@@ -57,6 +57,7 @@ export class PropertyImagesController {
           type: 'boolean',
         },
       },
+      
     },
   })
 @UseInterceptors(
@@ -81,6 +82,7 @@ uploadImages(
     @Request()
     req: any,
   ) {
+    console.log('USER:', req.user);
     return this.propertyImagesService.uploadImages(
       propertyId,
       files,
