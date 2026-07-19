@@ -476,6 +476,167 @@ const data = properties.map((property) => {
 }
 
 // ===========================
+// Home Screen
+// ===========================
+
+async home() {
+  const [
+    featured,
+    latest,
+    mostFavorited,
+    topRated,
+    popularLocalities,
+  ] = await Promise.all([
+    // Featured Properties
+    this.prisma.property.findMany({
+      where: {
+        isAvailable: true,
+      },
+      take: 10,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        images: {
+          orderBy: {
+            displayOrder: 'asc',
+          },
+          take: 1,
+        },
+        owner: {
+          select: {
+            id: true,
+            fullName: true,
+          },
+        },
+      },
+    }),
+
+    // Latest Properties
+    this.prisma.property.findMany({
+      where: {
+        isAvailable: true,
+      },
+      take: 10,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        images: {
+          orderBy: {
+            displayOrder: 'asc',
+          },
+          take: 1,
+        },
+      },
+    }),
+
+    // Most Favorited
+    this.prisma.property.findMany({
+      where: {
+        isAvailable: true,
+      },
+      take: 10,
+      orderBy: {
+        favorites: {
+          _count: 'desc',
+        },
+      },
+      include: {
+        images: {
+          take: 1,
+        },
+        _count: {
+          select: {
+            favorites: true,
+          },
+        },
+      },
+    }),
+
+    // Top Rated
+    this.prisma.property.findMany({
+      where: {
+        isAvailable: true,
+      },
+      take: 10,
+      include: {
+        images: {
+          take: 1,
+        },
+        reviews: true,
+      },
+    }),
+
+    // Popular Localities
+    this.prisma.property.groupBy({
+      by: ['city', 'locality'],
+      where: {
+        isAvailable: true,
+      },
+      _count: {
+        id: true,
+      },
+      orderBy: {
+        _count: {
+          id: 'desc',
+        },
+      },
+      take: 10,
+    }),
+  ]);
+
+  const topRatedProperties = topRated
+    .map((property) => {
+      const totalRating = property.reviews.reduce(
+        (sum, review) => sum + review.rating,
+        0,
+      );
+
+      const averageRating =
+        property.reviews.length > 0
+          ? Number(
+              (
+                totalRating /
+                property.reviews.length
+              ).toFixed(1),
+            )
+          : 0;
+
+      return {
+        ...this.serializeProperty(property),
+        averageRating,
+        totalReviews: property.reviews.length,
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.averageRating - a.averageRating,
+    );
+
+  return {
+    success: true,
+
+    featured: featured.map((p) =>
+      this.serializeProperty(p),
+    ),
+
+    latest: latest.map((p) =>
+      this.serializeProperty(p),
+    ),
+
+    mostFavorited: mostFavorited.map((p) => ({
+      ...this.serializeProperty(p),
+      favorites: p._count.favorites,
+    })),
+
+    topRated: topRatedProperties,
+
+    popularLocalities,
+  };
+}
+
+// ===========================
 // Owner - My Properties
 // ===========================
 

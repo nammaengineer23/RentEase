@@ -81,6 +81,14 @@ export class PropertiesController {
 findMyProperties(@Request() req: any) {
   return this.propertiesService.findMyProperties(req.user);
 }
+  //Home Screen Data
+  @Get('home')
+@ApiOperation({
+  summary: 'Home Screen Data',
+})
+home() {
+  return this.propertiesService.home();
+}
 
   // Get Property By Id
   @Get(':id')
