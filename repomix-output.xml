@@ -12087,148 +12087,6 @@ parking?: boolean;
 }
 </file>
 
-<file path="backend/src/modules/properties/properties.controller.ts">
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
-
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
-
-import { PropertiesService } from './properties.service';
-
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-
-import { UserRole } from '@prisma/client';
-
-import { CreatePropertyDto } from './dto/create-property.dto';
-import { UpdatePropertyDto } from './dto/update-property.dto';
-import { FilterPropertiesDto } from './dto/filter-property.dto';
-
-
-@ApiTags('Properties')
-@Controller('properties')
-export class PropertiesController {
-  constructor(
-    private readonly propertiesService: PropertiesService,
-  ) {}
-
-  // Create Property
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.OWNER)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Create Property',
-  })
-  create(
-    @Body() createPropertyDto: CreatePropertyDto,
-    @Request() req: any,
-  ) {
-    return this.propertiesService.create(
-      createPropertyDto,
-      req.user,
-    );
-  }
-
-  // Get All Properties
-  @Get()
-  @ApiOperation({
-    summary: 'Get All Properties',
-  })
-  findAll(
-    @Query() filterDto: FilterPropertiesDto,
-  ) {
-    return this.propertiesService.findAll(
-      filterDto,
-    );
-  }
-
-  // ===========================
-// Owner - My Properties
-// ===========================
-
-@Get('my-properties')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-@ApiOperation({
-  summary: 'Get logged-in owner properties',
-})
-findMyProperties(@Request() req: any) {
-  return this.propertiesService.findMyProperties(req.user);
-}
-  //Home Screen Data
-  @Get('home')
-@ApiOperation({
-  summary: 'Home Screen Data',
-})
-home() {
-  return this.propertiesService.home();
-}
-
-  // Get Property By Id
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get Property By ID',
-  })
-  findOne(
-    @Param('id') id: string,
-  ) {
-    return this.propertiesService.findOne(id);
-  }
-
-  // Update Property
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Update Property',
-  })
-  update(
-    @Param('id') id: string,
-    @Body() updatePropertyDto: UpdatePropertyDto,
-    @Request() req: any,
-  ) {
-    return this.propertiesService.update(
-      id,
-      updatePropertyDto,
-      req.user,
-    );
-  }
-
-  // Delete Property
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Delete Property',
-  })
-  remove(
-    @Param('id') id: string,
-    @Request() req: any,
-  ) {
-    return this.propertiesService.remove(
-      id,
-      req.user,
-    );
-  }
-}
-</file>
-
 <file path="backend/src/main.ts">
 import {
   ValidationPipe,
@@ -12490,6 +12348,148 @@ export class FirebaseService {
         },
         data,
       });
+  }
+}
+</file>
+
+<file path="backend/src/modules/properties/properties.controller.ts">
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+
+import { PropertiesService } from './properties.service';
+
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+
+import { UserRole } from '@prisma/client';
+
+import { CreatePropertyDto } from './dto/create-property.dto';
+import { UpdatePropertyDto } from './dto/update-property.dto';
+import { FilterPropertiesDto } from './dto/filter-property.dto';
+
+
+@ApiTags('Properties')
+@Controller('properties')
+export class PropertiesController {
+  constructor(
+    private readonly propertiesService: PropertiesService,
+  ) {}
+
+  // Create Property
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Create Property',
+  })
+  create(
+    @Body() createPropertyDto: CreatePropertyDto,
+    @Request() req: any,
+  ) {
+    return this.propertiesService.create(
+      createPropertyDto,
+      req.user,
+    );
+  }
+
+  // Get All Properties
+  @Get()
+  @ApiOperation({
+    summary: 'Get All Properties',
+  })
+  findAll(
+    @Query() filterDto: FilterPropertiesDto,
+  ) {
+    return this.propertiesService.findAll(
+      filterDto,
+    );
+  }
+
+  // ===========================
+// Owner - My Properties
+// ===========================
+
+@Get('my-properties')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: 'Get logged-in owner properties',
+})
+findMyProperties(@Request() req: any) {
+  return this.propertiesService.findMyProperties(req.user);
+}
+  //Home Screen Data
+  @Get('home')
+@ApiOperation({
+  summary: 'Home Screen Data',
+})
+home() {
+  return this.propertiesService.home();
+}
+
+  // Get Property By Id
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get Property By ID',
+  })
+  findOne(
+    @Param('id') id: string,
+  ) {
+    return this.propertiesService.findOne(id);
+  }
+
+  // Update Property
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update Property',
+  })
+  update(
+    @Param('id') id: string,
+    @Body() updatePropertyDto: UpdatePropertyDto,
+    @Request() req: any,
+  ) {
+    return this.propertiesService.update(
+      id,
+      updatePropertyDto,
+      req.user,
+    );
+  }
+
+  // Delete Property
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete Property',
+  })
+  remove(
+    @Param('id') id: string,
+    @Request() req: any,
+  ) {
+    return this.propertiesService.remove(
+      id,
+      req.user,
+    );
   }
 }
 </file>
@@ -13336,7 +13336,7 @@ export class PropertiesService {
     return {
       success: true,
       message: 'Property created successfully.',
-      property: this.serializeProperty(property),
+      property: serializePrisma(property),
     };
   }
 
@@ -13691,7 +13691,7 @@ const data = properties.map((property) => {
       : 0;
 
   return {
-    ...this.serializeProperty(property),
+    ...serializePrisma(property),
     averageRating,
     totalReviews: property.reviews.length,
   };
@@ -13840,7 +13840,7 @@ async home() {
           : 0;
 
       return {
-        ...this.serializeProperty(property),
+        ...serializePrisma(property),
         averageRating,
         totalReviews: property.reviews.length,
       };
@@ -13854,15 +13854,15 @@ async home() {
     success: true,
 
     featured: featured.map((p) =>
-      this.serializeProperty(p),
+      serializePrisma(p),
     ),
 
     latest: latest.map((p) =>
-      this.serializeProperty(p),
+      serializePrisma(p),
     ),
 
     mostFavorited: mostFavorited.map((p) => ({
-      ...this.serializeProperty(p),
+      ...serializePrisma(p),
       favorites: p._count.favorites,
     })),
 
@@ -13940,7 +13940,7 @@ async findMyProperties(user: any) {
         : 0;
 
     return {
-      ...this.serializeProperty(property),
+      ...serializePrisma(property),
       averageRating,
       totalReviews: property.reviews.length,
     };
@@ -14002,7 +14002,7 @@ async findMyProperties(user: any) {
 
     return {
       success: true,
-      property: this.serializeProperty(property),
+      property: serializePrisma(property),
     };
   }
 
@@ -14101,7 +14101,7 @@ async findMyProperties(user: any) {
       success: true,
       message:
         'Property updated successfully.',
-      property: this.serializeProperty(updatedProperty),
+      property: serializePrisma(updatedProperty),
     };
   }
 
