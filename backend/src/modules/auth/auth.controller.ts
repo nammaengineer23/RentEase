@@ -17,7 +17,7 @@ import { FirebaseLoginDto } from './dto/firebase-login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -103,6 +103,33 @@ resetPassword(
   summary: 'Get current user',
 })
 getCurrentUser(@Request() req: any) {
-  return req.user;
+  return this.authService.me(req.user.id);
 }
+
+@Post('logout')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: 'Logout',
+})
+logout(@Request() req: any) {
+  return this.authService.logout(req.user.id);
+}
+
+@Post('change-password')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: 'Change password',
+})
+changePassword(
+  @Request() req: any,
+  @Body() dto: ChangePasswordDto,
+) {
+  return this.authService.changePassword(
+    req.user.id,
+    dto,
+  );
+}
+
 }
