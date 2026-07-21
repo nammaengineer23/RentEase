@@ -28,8 +28,8 @@ import { UserRole } from '@prisma/client';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { FilterPropertiesDto } from './dto/filter-property.dto';
-
-
+import { UpdatePropertyAmenitiesDto } from './dto/update-property-amenities.dto';
+import { NearbyPropertiesDto } from './dto/nearby-properties.dto';
 @ApiTags('Properties')
 @Controller('properties')
 export class PropertiesController {
@@ -69,6 +69,27 @@ export class PropertiesController {
   }
 
   // ===========================
+// Update Property Amenities
+// ===========================
+
+@Post(':id/amenities')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({
+  summary: 'Assign amenities to property',
+})
+updateAmenities(
+  @Param('id') id: string,
+  @Body() dto: UpdatePropertyAmenitiesDto,
+  @Request() req: any,
+) {
+  return this.propertiesService.updateAmenities(
+    id,
+    dto,
+    req.user,
+  );
+}
+  // ===========================
 // Owner - My Properties
 // ===========================
 
@@ -88,6 +109,20 @@ findMyProperties(@Request() req: any) {
 })
 home() {
   return this.propertiesService.home();
+}
+
+// ===========================
+// Nearby Properties
+// ===========================
+
+@Get('nearby')
+@ApiOperation({
+  summary: 'Find nearby properties',
+})
+nearby(
+  @Query() query: NearbyPropertiesDto,
+) {
+  return this.propertiesService.findNearby(query);
 }
 
   // Get Property By Id

@@ -5,104 +5,79 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../database/prisma.service';
-
 import { Prisma, UserRole } from '@prisma/client';
-
+import { serializePrisma } from '../../common/utils/prisma-response.util';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { FilterPropertiesDto } from './dto/filter-property.dto';
+import { UpdatePropertyAmenitiesDto } from './dto/update-property-amenities.dto';
+import { NearbyPropertiesDto } from './dto/nearby-properties.dto';
 
 @Injectable()
 export class PropertiesService {
   constructor( 
     private readonly prisma: PrismaService,
     ) {}
-   private serializeProperty(property: any) {
+   
+
+// ===========================
+// Create Property
+// ===========================
+
+async create(
+  createPropertyDto: CreatePropertyDto,
+  user: any,
+) {
+  const {
+    amenityIds,
+    ...propertyData
+  } = createPropertyDto;
+
+  const property = await this.prisma.property.create({
+    data: {
+      ...propertyData,
+
+      ownerId: user.id,
+
+      amenities: amenityIds?.length
+        ? {
+            create: amenityIds.map((amenityId) => ({
+              amenity: {
+                connect: {
+                  id: amenityId,
+                },
+              },
+            })),
+          }
+        : undefined,
+    },
+
+    include: {
+      owner: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+        },
+      },
+
+      amenities: {
+        include: {
+          amenity: true,
+        },
+      },
+
+      images: true,
+    },
+  });
+
   return {
-    ...property,
-
-    price:
-      property.price != null
-        ? Number(property.price)
-        : null,
-
-    securityDeposit:
-      property.securityDeposit != null
-        ? Number(property.securityDeposit)
-        : null,
-
-    latitude:
-      property.latitude != null
-        ? Number(property.latitude)
-        : null,
-
-    longitude:
-      property.longitude != null
-        ? Number(property.longitude)
-        : null,
+    success: true,
+    message: 'Property created successfully.',
+    property: serializePrisma(property),
   };
 }
-  // ===========================
-  // Create Property
-  // ===========================
-
-  async create(
-    createPropertyDto: CreatePropertyDto,
-    user: any,
-  ) {
-    const {
-      amenityIds,
-      ...propertyData
-    } = createPropertyDto;
-
-    const property =
-      await this.prisma.property.create({
-        data: {
-          ...propertyData,
-
-          ownerId: user.id,
-
-          amenities: amenityIds?.length
-            ? {
-                create: amenityIds.map(
-                  (amenityId) => ({
-                    amenity: {
-                      connect: {
-                        id: amenityId,
-                      },
-                    },
-                  }),
-                ),
-              }
-            : undefined,
-        },
-
-        include: {
-          owner: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              phone: true,
-            },
-          },
-
-          amenities: {
-            include: {
-              amenity: true,
-            },
-          },
-
-          images: true,
-        },
-      });
-
-    return {
-      success: true,
-      message: 'Property created successfully.',
-      property: this.serializeProperty(property),
-    };
-  }
 
 private buildPropertyWhere(
   filterDto: FilterPropertiesDto,
@@ -113,6 +88,7 @@ private buildPropertyWhere(
     locality,
     pincode,
     propertyType,
+    amenities,
     furnishing,
     bedrooms,
     bathrooms,
@@ -127,11 +103,16 @@ private buildPropertyWhere(
 
   const where: Prisma.PropertyWhereInput = {};
 
-  // Search
   if (search) {
     where.OR = [
       {
         title: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      {
+        description: {
           contains: search,
           mode: 'insensitive',
         },
@@ -151,233 +132,74 @@ private buildPropertyWhere(
     ];
   }
 
-  // Location
-  if (city) {
-    where.city = {
-      contains: city,
-      mode: 'insensitive',
-    };
-  }
+  if (city) where.city = city;
+  if (locality) where.locality = locality;
+  if (pincode) where.pincode = pincode;
+  if (propertyType) where.propertyType = propertyType;
+  if (furnishing) where.furnishing = furnishing;
+  if (bedrooms) where.bedrooms = bedrooms;
+  if (bathrooms) where.bathrooms = bathrooms;
+  if (parking !== undefined) where.parking = parking;
+  if (petFriendly !== undefined) where.petFriendly = petFriendly;
+  if (isAvailable !== undefined) where.isAvailable = isAvailable;
 
-  if (locality) {
-    where.locality = {
-      contains: locality,
-      mode: 'insensitive',
-    };
-  }
-
-  if (pincode) {
-    where.pincode = pincode;
-  }
-
-  // Property details
-  if (propertyType) {
-    where.propertyType = propertyType;
-  }
-
-  if (furnishing) {
-    where.furnishing = furnishing;
-  }
-
-  if (bedrooms !== undefined) {
-    where.bedrooms = bedrooms;
-  }
-
-  if (bathrooms !== undefined) {
-    where.bathrooms = bathrooms;
-  }
-
-  // Price
-  if (minPrice !== undefined || maxPrice !== undefined) {
+  if (minPrice || maxPrice) {
     where.price = {};
 
-    if (minPrice !== undefined) {
-      where.price.gte = minPrice;
-    }
-
-    if (maxPrice !== undefined) {
-      where.price.lte = maxPrice;
-    }
+    if (minPrice) where.price.gte = minPrice;
+    if (maxPrice) where.price.lte = maxPrice;
   }
 
-  // Area
-  if (minArea !== undefined || maxArea !== undefined) {
+  if (minArea || maxArea) {
     where.area = {};
 
-    if (minArea !== undefined) {
-      where.area.gte = minArea;
-    }
-
-    if (maxArea !== undefined) {
-      where.area.lte = maxArea;
-    }
+    if (minArea) where.area.gte = minArea;
+    if (maxArea) where.area.lte = maxArea;
   }
 
-  // Boolean filters
-  if (parking !== undefined) {
-    where.parking = parking;
-  }
-
-  if (petFriendly !== undefined) {
-    where.petFriendly = petFriendly;
-  }
-
-  if (isAvailable !== undefined) {
-    where.isAvailable = isAvailable;
+  if (amenities?.length) {
+    where.amenities = {
+      some: {
+        amenityId: {
+          in: amenities,
+        },
+      },
+    };
   }
 
   return where;
 }
-
+   
   // ===========================
 // Get All Properties
 // ===========================
 
 async findAll(filterDto: FilterPropertiesDto) {
  
-  const {
-    page = 1,
-    limit = 10,
-    search,
-    city,
-    locality,
-    pincode,
-    propertyType,
-    furnishing,
-    bedrooms,
-    bathrooms,
-    minPrice,
-    maxPrice,
-    minArea,
-    maxArea,
-    parking,
-    petFriendly,
-    isAvailable,
-    sortBy = 'createdAt',
-    order = 'desc',
-  } = filterDto;
+ const {
+  page = 1,
+  limit = 10,
+  search,
+  city,
+  locality,
+  pincode,
+  propertyType,
+  furnishing,
+  amenities,
+  bedrooms,
+  bathrooms,
+  minPrice,
+  maxPrice,
+  minArea,
+  maxArea,
+  parking,
+  petFriendly,
+  isAvailable,
+  sortBy = 'createdAt',
+  order = 'desc',
+} = filterDto;
 
- 
 const where = this.buildPropertyWhere(filterDto);
-
-  // -----------------------
-  // Search
-  // -----------------------
-
-  if (search) {
-    where.OR = [
-      {
-        title: {
-          contains: search,
-          mode: 'insensitive',
-        },
-      },
-      {
-        city: {
-          contains: search,
-          mode: 'insensitive',
-        },
-      },
-      {
-        locality: {
-          contains: search,
-          mode: 'insensitive',
-        },
-      },
-    ];
-  }
-
-  // -----------------------
-  // Location
-  // -----------------------
-
-  if (city) {
-    where.city = {
-      contains: city,
-      mode: 'insensitive',
-    };
-  }
-
-  if (locality) {
-    where.locality = {
-      contains: locality,
-      mode: 'insensitive',
-    };
-  }
-
-  if (pincode) {
-    where.pincode = pincode;
-  }
-
-  // -----------------------
-  // Property Details
-  // -----------------------
-
-  if (propertyType) {
-    where.propertyType = propertyType;
-  }
-
-  if (furnishing) {
-    where.furnishing = furnishing;
-  }
-
-  if (bedrooms !== undefined) {
-    where.bedrooms = bedrooms;
-  }
-
-  if (bathrooms !== undefined) {
-    where.bathrooms = bathrooms;
-  }
-
-  // -----------------------
-  // Price
-  // -----------------------
-
-  if (minPrice !== undefined || maxPrice !== undefined) {
-    where.price = {};
-
-    if (minPrice !== undefined) {
-      where.price.gte = minPrice;
-    }
-
-    if (maxPrice !== undefined) {
-      where.price.lte = maxPrice;
-    }
-  }
-
-  // -----------------------
-  // Area
-  // -----------------------
-
-  if (minArea !== undefined || maxArea !== undefined) {
-    where.area = {};
-
-    if (minArea !== undefined) {
-      where.area.gte = minArea;
-    }
-
-    if (maxArea !== undefined) {
-      where.area.lte = maxArea;
-    }
-  }
-
-  // -----------------------
-  // Booleans
-  // -----------------------
-
-  if (parking !== undefined) {
-    where.parking = parking;
-  }
-
-  if (petFriendly !== undefined) {
-    where.petFriendly = petFriendly;
-  }
-
-  if (isAvailable !== undefined) {
-    where.isAvailable = isAvailable;
-  }
-  
-
  
   // -----------------------
   // Pagination
@@ -394,7 +216,7 @@ const where = this.buildPropertyWhere(filterDto);
       take: limit,
 
       orderBy: {
-        [sortBy]: order,
+      [sortBy]: order,
       },
 
       include: {
@@ -455,7 +277,7 @@ const data = properties.map((property) => {
       : 0;
 
   return {
-    ...this.serializeProperty(property),
+    ...serializePrisma(property),
     averageRating,
     totalReviews: property.reviews.length,
   };
@@ -604,7 +426,7 @@ async home() {
           : 0;
 
       return {
-        ...this.serializeProperty(property),
+        ...serializePrisma(property),
         averageRating,
         totalReviews: property.reviews.length,
       };
@@ -618,15 +440,15 @@ async home() {
     success: true,
 
     featured: featured.map((p) =>
-      this.serializeProperty(p),
+      serializePrisma(p),
     ),
 
     latest: latest.map((p) =>
-      this.serializeProperty(p),
+      serializePrisma(p),
     ),
 
     mostFavorited: mostFavorited.map((p) => ({
-      ...this.serializeProperty(p),
+      ...serializePrisma(p),
       favorites: p._count.favorites,
     })),
 
@@ -704,7 +526,7 @@ async findMyProperties(user: any) {
         : 0;
 
     return {
-      ...this.serializeProperty(property),
+      ...serializePrisma(property),
       averageRating,
       totalReviews: property.reviews.length,
     };
@@ -717,6 +539,78 @@ async findMyProperties(user: any) {
   };
 }
 
+/// ===========================
+// Nearby Properties
+// ===========================
+
+async findNearby(query: NearbyPropertiesDto) {
+  const {
+    latitude,
+    longitude,
+    radius = 5,
+  } = query;
+
+  const properties = await this.prisma.property.findMany({
+    where: {
+      isAvailable: true,
+      latitude: {
+        not: null,
+      },
+      longitude: {
+        not: null,
+      },
+    },
+
+    include: {
+      owner: {
+        select: {
+          id: true,
+          fullName: true,
+        },
+      },
+
+      images: {
+        orderBy: {
+          displayOrder: 'asc',
+        },
+        take: 1,
+      },
+
+      amenities: {
+        include: {
+          amenity: true,
+        },
+      },
+    },
+  });
+
+  const nearby = properties
+    .map((property) => {
+      const lat = Number(property.latitude);
+      const lng = Number(property.longitude);
+
+      const distance = this.calculateDistance(
+        latitude,
+        longitude,
+        lat,
+        lng,
+      );
+
+      return {
+        ...serializePrisma(property),
+        distance: Number(distance.toFixed(2)),
+      };
+    })
+    .filter((property) => property.distance <= radius)
+    .sort((a, b) => a.distance - b.distance);
+
+  return {
+    success: true,
+    total: nearby.length,
+    radius,
+    data: nearby,
+  };
+}
     // ===========================
   // Get Property By Id
   // ===========================
@@ -766,9 +660,107 @@ async findMyProperties(user: any) {
 
     return {
       success: true,
-      property: this.serializeProperty(property),
+      property: serializePrisma(property),
     };
   }
+
+  // ===========================
+// Similar Properties
+// ===========================
+
+async findSimilar(id: string) {
+  const property = await this.prisma.property.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!property) {
+    throw new NotFoundException('Property not found.');
+  }
+
+  const similar = await this.prisma.property.findMany({
+    where: {
+      id: {
+        not: id,
+      },
+
+      isAvailable: true,
+
+      city: property.city,
+
+      propertyType: property.propertyType,
+
+      OR: [
+        {
+          locality: property.locality,
+        },
+        {
+          bedrooms: property.bedrooms,
+        },
+      ],
+    },
+
+    take: 10,
+
+    orderBy: {
+      createdAt: 'desc',
+    },
+
+    include: {
+      owner: {
+        select: {
+          id: true,
+          fullName: true,
+        },
+      },
+
+      images: {
+        orderBy: {
+          displayOrder: 'asc',
+        },
+        take: 1,
+      },
+
+      amenities: {
+        include: {
+          amenity: true,
+        },
+      },
+
+      reviews: true,
+
+      favorites: true,
+    },
+  });
+
+  const data = similar.map((property) => {
+    const totalRating = property.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0,
+    );
+
+    const averageRating =
+      property.reviews.length > 0
+        ? Number(
+            (totalRating / property.reviews.length).toFixed(1),
+          )
+        : 0;
+
+    return {
+      ...serializePrisma(property),
+      averageRating,
+      totalReviews: property.reviews.length,
+      totalFavorites: property.favorites.length,
+    };
+  });
+
+  return {
+    success: true,
+    total: data.length,
+    data,
+  };
+}
 
   // ===========================
   // Update Property
@@ -865,9 +857,102 @@ async findMyProperties(user: any) {
       success: true,
       message:
         'Property updated successfully.',
-      property: this.serializeProperty(updatedProperty),
+      property: serializePrisma(updatedProperty),
     };
   }
+
+// ===========================
+// Update Property Amenities
+// ===========================
+
+async updateAmenities(
+  propertyId: string,
+  dto: UpdatePropertyAmenitiesDto,
+  user: any,
+) {
+  const property = await this.prisma.property.findUnique({
+    where: {
+      id: propertyId,
+    },
+  });
+
+  if (!property) {
+    throw new NotFoundException('Property not found.');
+  }
+
+  const userId = user.id ?? user.sub;
+
+  if (property.ownerId !== userId) {
+    throw new ForbiddenException(
+      'You are not allowed to update this property.',
+    );
+  }
+
+  await this.prisma.propertyAmenity.deleteMany({
+    where: {
+      propertyId,
+    },
+  });
+
+  if (dto.amenityIds.length > 0) {
+    await this.prisma.propertyAmenity.createMany({
+      data: dto.amenityIds.map((amenityId) => ({
+        propertyId,
+        amenityId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  const updatedProperty = await this.prisma.property.findUnique({
+    where: {
+      id: propertyId,
+    },
+    include: {
+      amenities: {
+        include: {
+          amenity: true,
+        },
+      },
+    },
+  });
+
+  return serializePrisma(updatedProperty);
+}
+
+// ===========================
+// Distance Calculator
+// ===========================
+
+private calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371;
+
+  const dLat = this.toRadians(lat2 - lat1);
+  const dLon = this.toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(this.toRadians(lat1)) *
+      Math.cos(this.toRadians(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(
+    Math.sqrt(a),
+    Math.sqrt(1 - a),
+  );
+
+  return R * c;
+}
+
+private toRadians(value: number): number {
+  return (value * Math.PI) / 180;
+}
 
     // ===========================
   // Delete Property

@@ -8,25 +8,25 @@ import {
 
 export class RegisterDto {
   @ApiProperty({
-    example: 'Shrikant Kumar',
+    example: 'Namma Engineer',
   })
   @IsNotEmpty()
   fullName!: string;
 
   @ApiProperty({
-    example: 'shrikant@example.com',
+    example: 'nammaengineer23@gmail.com',
   })
   @IsEmail()
   email!: string;
 
   @ApiProperty({
-    example: '+919876543210',
+    example: '+918880002304',
   })
   @IsPhoneNumber('IN')
   phone!: string;
 
   @ApiProperty({
-    example: 'password123',
+    example: 'Password@123',
     minLength: 6,
   })
   @MinLength(6)

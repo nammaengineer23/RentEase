@@ -14,7 +14,7 @@ export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
   // ==========================
-  // Create Review
+  // Create / Update Review
   // ==========================
   async create(
     propertyId: string,
@@ -31,6 +31,12 @@ export class ReviewsService {
       throw new NotFoundException('Property not found');
     }
 
+    if (property.ownerId === userId) {
+      throw new BadRequestException(
+        'You cannot review your own property.',
+      );
+    }
+
     const existing = await this.prisma.review.findFirst({
       where: {
         propertyId,
@@ -39,12 +45,32 @@ export class ReviewsService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        'You have already reviewed this property',
-      );
+      const review = await this.prisma.review.update({
+        where: {
+          id: existing.id,
+        },
+        data: {
+          rating: dto.rating,
+          comment: dto.comment,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Review updated successfully.',
+        review,
+      };
     }
 
-    return this.prisma.review.create({
+    const review = await this.prisma.review.create({
       data: {
         propertyId,
         userId,
@@ -60,13 +86,19 @@ export class ReviewsService {
         },
       },
     });
+
+    return {
+      success: true,
+      message: 'Review added successfully.',
+      review,
+    };
   }
 
   // ==========================
   // Get Reviews
   // ==========================
   async findByProperty(propertyId: string) {
-    return this.prisma.review.findMany({
+    const reviews = await this.prisma.review.findMany({
       where: {
         propertyId,
       },
@@ -82,63 +114,77 @@ export class ReviewsService {
         createdAt: 'desc',
       },
     });
-  }
 
-  // ==========================
-// Review Statistics
-// ==========================
-async getStats(propertyId: string) {
-  const reviews = await this.prisma.review.findMany({
-    where: {
-      propertyId,
-    },
-    select: {
-      rating: true,
-    },
-  });
+    const averageRating =
+      reviews.length > 0
+        ? Number(
+            (
+              reviews.reduce(
+                (sum, review) => sum + review.rating,
+                0,
+              ) / reviews.length
+            ).toFixed(1),
+          )
+        : 0;
 
-  const totalReviews = reviews.length;
-
-  if (totalReviews === 0) {
     return {
-      averageRating: 0,
-      totalReviews: 0,
-      ratingBreakdown: {
-        5: 0,
-        4: 0,
-        3: 0,
-        2: 0,
-        1: 0,
-      },
+      success: true,
+      total: reviews.length,
+      averageRating,
+      data: reviews,
     };
   }
 
-  const ratingBreakdown = {
-    5: 0,
-    4: 0,
-    3: 0,
-    2: 0,
-    1: 0,
-  };
+  // ==========================
+  // Review Statistics
+  // ==========================
+  async getStats(propertyId: string) {
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        propertyId,
+      },
+      select: {
+        rating: true,
+      },
+    });
 
-  let totalRating = 0;
+    const totalReviews = reviews.length;
 
-  for (const review of reviews) {
-    totalRating += review.rating;
+    const ratings = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    };
 
-    ratingBreakdown[
-      review.rating as keyof typeof ratingBreakdown
-    ]++;
+    if (totalReviews === 0) {
+      return {
+        success: true,
+        averageRating: 0,
+        totalReviews: 0,
+        ratings,
+      };
+    }
+
+    let totalRating = 0;
+
+    for (const review of reviews) {
+      totalRating += review.rating;
+      ratings[
+        review.rating as keyof typeof ratings
+      ]++;
+    }
+
+    return {
+      success: true,
+      averageRating: Number(
+        (totalRating / totalReviews).toFixed(1),
+      ),
+      totalReviews,
+      ratings,
+    };
   }
-
-  return {
-    averageRating: Number(
-      (totalRating / totalReviews).toFixed(1),
-    ),
-    totalReviews,
-    ratingBreakdown,
-  };
-}
 
   // ==========================
   // Update Review
@@ -164,12 +210,27 @@ async getStats(propertyId: string) {
       );
     }
 
-    return this.prisma.review.update({
-      where: {
-        id: reviewId,
-      },
-      data: dto,
-    });
+    const updatedReview =
+      await this.prisma.review.update({
+        where: {
+          id: reviewId,
+        },
+        data: dto,
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+            },
+          },
+        },
+      });
+
+    return {
+      success: true,
+      message: 'Review updated successfully.',
+      review: updatedReview,
+    };
   }
 
   // ==========================
@@ -202,7 +263,8 @@ async getStats(propertyId: string) {
     });
 
     return {
-      message: 'Review deleted successfully',
+      success: true,
+      message: 'Review deleted successfully.',
     };
   }
 }

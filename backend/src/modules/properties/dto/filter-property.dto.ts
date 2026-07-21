@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
 import {
   FurnishingType,
   PropertyStatus,
@@ -20,31 +21,25 @@ import {
   Min,
 } from 'class-validator';
 
+
 export enum SortOrder {
   ASC = 'asc',
   DESC = 'desc',
 }
 
-const ToBoolean = ({ value }: { value: any }) => {
-  if (value === undefined || value === null || value === '') {
-    return undefined;
-  }
-
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  return value === 'true';
-};
 
 export class FilterPropertiesDto {
+
+
   @ApiPropertyOptional({
-    description: 'Search by title, city or locality',
+    description: 'Search title, city, locality',
     example: 'Luxury Apartment',
   })
   @IsOptional()
   @IsString()
   search?: string;
+
+
 
   @ApiPropertyOptional({
     example: 'Bangalore',
@@ -53,12 +48,16 @@ export class FilterPropertiesDto {
   @IsString()
   city?: string;
 
+
+
   @ApiPropertyOptional({
     example: 'HSR Layout',
   })
   @IsOptional()
   @IsString()
   locality?: string;
+
+
 
   @ApiPropertyOptional({
     example: '560102',
@@ -67,6 +66,8 @@ export class FilterPropertiesDto {
   @IsString()
   pincode?: string;
 
+
+
   @ApiPropertyOptional({
     enum: PropertyType,
   })
@@ -74,172 +75,213 @@ export class FilterPropertiesDto {
   @IsEnum(PropertyType)
   propertyType?: PropertyType;
 
+
+
+  // ============================
+  // Amenities Filter
+  // ============================
+
   @ApiPropertyOptional({
-    enum: FurnishingType,
+    example:
+      'cmrua1zce0000v5lwl5p0fbf5,cmrubj9820000v5d011i7v853',
+    description:
+      'Filter by amenity IDs comma separated',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+
+    if (!value) {
+      return undefined;
+    }
+
+
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+
+    return value
+      .split(',')
+      .map((id:string)=>id.trim());
+
+  })
+  amenities?: string[];
+
+
+
+  @ApiPropertyOptional({
+    enum:FurnishingType,
   })
   @IsOptional()
   @IsEnum(FurnishingType)
   furnishing?: FurnishingType;
 
+
+
   @ApiPropertyOptional({
-    example: 2,
+    example:2,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsInt()
-  bedrooms?: number;
+  bedrooms?:number;
+
+
 
   @ApiPropertyOptional({
-    example: 2,
+    example:2,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsInt()
-  bathrooms?: number;
+  bathrooms?:number;
+
+
 
   @ApiPropertyOptional({
-    example: 10000,
+    example:10000,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsNumber()
-  minPrice?: number;
+  minPrice?:number;
+
+
 
   @ApiPropertyOptional({
-    example: 50000,
+    example:50000,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsNumber()
-  maxPrice?: number;
+  maxPrice?:number;
+
+
 
   @ApiPropertyOptional({
-    example: 500,
+    example:500,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsNumber()
-  minArea?: number;
+  minArea?:number;
+
+
 
   @ApiPropertyOptional({
-    example: 2000,
+    example:2000,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsNumber()
-  maxArea?: number;
+  maxArea?:number;
+
+
 
   @ApiPropertyOptional({
-    example: true,
-    description: 'Filter by parking availability',
+    example:true,
   })
   @IsOptional()
-@Transform(({ value }) => {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
+  @Transform(({value})=>{
 
-  if (typeof value === 'boolean') {
-    return value;
-  }
+    if(value===undefined)
+      return undefined;
 
-  if (typeof value === 'string') {
-    return value.toLowerCase() === 'true';
-  }
+    return value === true ||
+           value === 'true';
 
-  return Boolean(value);
-})
-@IsBoolean()
-parking?: boolean;
-
-  @ApiPropertyOptional({
-    example: true,
-    description: 'Filter pet friendly properties',
   })
-  @IsOptional()
-@Transform(({ value }) => {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    return value.toLowerCase() === 'true';
-  }
-
-  return Boolean(value);
-})
   @IsBoolean()
-  petFriendly?: boolean;
+  parking?:boolean;
+
+
 
   @ApiPropertyOptional({
-    example: true,
-    description: 'Filter available properties',
+    example:true,
   })
   @IsOptional()
-@Transform(({ value }) => {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
+  @Transform(({value})=>{
 
-  if (typeof value === 'boolean') {
-    return value;
-  }
+    if(value===undefined)
+      return undefined;
 
-  if (typeof value === 'string') {
-    return value.toLowerCase() === 'true';
-  }
+    return value === true ||
+           value === 'true';
 
-  return Boolean(value);
-})
+  })
   @IsBoolean()
-  isAvailable?: boolean;
+  petFriendly?:boolean;
+
+
 
   @ApiPropertyOptional({
-    enum: PropertyStatus,
+    example:true,
+  })
+  @IsOptional()
+  @Transform(({value})=>{
+
+    if(value===undefined)
+      return undefined;
+
+    return value === true ||
+           value === 'true';
+
+  })
+  @IsBoolean()
+  isAvailable?:boolean;
+
+
+
+  @ApiPropertyOptional({
+    enum:PropertyStatus,
   })
   @IsOptional()
   @IsEnum(PropertyStatus)
-  status?: PropertyStatus;
+  status?:PropertyStatus;
+
+
+
+  // Pagination
 
   @ApiPropertyOptional({
-    example: 1,
-    default: 1,
+    default:1,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsInt()
   @Min(1)
-  page: number = 1;
+  page:number=1;
+
+
 
   @ApiPropertyOptional({
-    example: 10,
-    default: 10,
+    default:10,
   })
   @IsOptional()
-  @Type(() => Number)
+  @Type(()=>Number)
   @IsInt()
   @Min(1)
-  limit: number = 10;
+  limit:number=10;
+
+
+
+  // Sorting
 
   @ApiPropertyOptional({
-    example: 'createdAt',
-    default: 'createdAt',
-    description:
-      'Sort field (createdAt, updatedAt, price, area, bedrooms, bathrooms)',
+    default:'createdAt',
   })
   @IsOptional()
   @IsString()
-  sortBy: string = 'createdAt';
+  sortBy:string='createdAt';
+
+
 
   @ApiPropertyOptional({
-    enum: SortOrder,
-    default: SortOrder.DESC,
+    enum:SortOrder,
+    default:SortOrder.DESC,
   })
   @IsOptional()
   @IsEnum(SortOrder)
-  order: SortOrder = SortOrder.DESC;
+  order:SortOrder=SortOrder.DESC;
+
 }

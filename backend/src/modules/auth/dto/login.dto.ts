@@ -7,7 +7,7 @@ import {
 
 export class LoginDto {
   @ApiProperty({
-    example: 'shrikant@example.com',
+    example: 'nammaengineer23@gmail.com',
     description:
       'Email address or phone number',
   })
@@ -16,7 +16,7 @@ export class LoginDto {
   login!: string;
 
   @ApiProperty({
-    example: 'password123',
+    example: 'Password@123',
     minLength: 6,
   })
   @IsString()
