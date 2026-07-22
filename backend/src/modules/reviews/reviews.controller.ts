@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';

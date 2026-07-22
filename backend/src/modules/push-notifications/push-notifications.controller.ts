@@ -12,7 +12,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 import { RegisterDeviceDto } from './dto/register-device.dto';
 import { PushNotificationsService } from './push-notifications.service';

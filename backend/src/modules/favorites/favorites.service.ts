@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../database/prisma.service';
+import { serializePrisma } from '../../common/utils/prisma-response.util';
 
 @Injectable()
 export class FavoritesService {
@@ -49,19 +50,19 @@ export class FavoritesService {
       );
     }
 
-    const favorite =
-      await this.prisma.favorite.create({
-        data: {
-          userId: user.id,
-          propertyId,
-        },
-      });
+  const favorite =
+  await this.prisma.favorite.create({
+    data: {
+      userId: user.id,
+      propertyId,
+    },
+  });
 
-    return {
-      success: true,
-      message: 'Property added to favorites.',
-      favorite,
-    };
+return {
+  success: true,
+  message: 'Property added to favorites.',
+  favorite: serializePrisma(favorite),
+};
   }
 
   // ==========================
@@ -101,10 +102,10 @@ export class FavoritesService {
       });
 
     return {
-      success: true,
-      total: favorites.length,
-      favorites,
-    };
+  success: true,
+  total: favorites.length,
+  favorites: serializePrisma(favorites),
+};
   }
 
   // ==========================

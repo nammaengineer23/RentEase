@@ -10,6 +10,7 @@ import {
 import {
   ApiBearerAuth,
   ApiTags,
+  ApiOperation,
 } from '@nestjs/swagger';
 
 import { UserRole } from '@prisma/client';
@@ -154,5 +155,87 @@ getUser(
 ) {
   return this.adminService.getUser(id);
 }
+// ==========================
+// Get All Reviews
+// ==========================
+@Get('reviews')
+@ApiOperation({
+  summary: 'Get all reviews',
+})
+getReviews() {
+  return this.adminService.getReviews();
+}
 
+// ==========================
+// Delete Review
+// ==========================
+@Delete('reviews/:id')
+@ApiOperation({
+  summary: 'Delete review',
+})
+deleteReview(
+  @Param('id') id: string,
+) {
+  return this.adminService.deleteReview(id);
+}
+
+// ==========================
+// Get All Visits
+// ==========================
+@Get('visits')
+@ApiOperation({
+  summary: 'Get all property visits',
+})
+getVisits() {
+  return this.adminService.getVisits();
+}
+
+// ==========================
+// Approve Visit
+// ==========================
+@Patch('visits/:id/approve')
+@ApiOperation({
+  summary: 'Approve property visit',
+})
+approveVisit(
+  @Param('id') id: string,
+) {
+  return this.adminService.approveVisit(id);
+}
+
+// ==========================
+// Reject Visit
+// ==========================
+@Patch('visits/:id/reject')
+@ApiOperation({
+  summary: 'Reject property visit',
+})
+rejectVisit(
+  @Param('id') id: string,
+) {
+  return this.adminService.rejectVisit(id);
+}
+
+// ==========================
+// Complete Visit
+// ==========================
+@Patch('visits/:id/complete')
+@ApiOperation({
+  summary: 'Mark visit as completed',
+})
+completeVisit(
+  @Param('id') id: string,
+) {
+  return this.adminService.completeVisit(id);
+}
+// ==========================
+// Platform Analytics
+// ==========================
+@Get('analytics')
+@ApiOperation({
+  summary: 'Get platform analytics',
+})
+getAnalytics() {
+  return this.adminService.getAnalytics();
+}
 }

@@ -8,7 +8,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { CurrentUser } from '../../common/decorators/current-user/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { OwnerDashboardService } from './owner-dashboard.service';

@@ -1,17 +1,19 @@
 import { Module } from '@nestjs/common';
 
+import { PrismaModule } from '../../prisma/prisma.module';
+import { MailModule } from '../../mail/mail.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+
 import { PropertyVisitsController } from './property-visits.controller';
 import { PropertyVisitsService } from './property-visits.service';
-import { MailModule } from '../../mail/mail.module';
-import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule, MailModule,],
-
+  imports: [
+    PrismaModule,
+    MailModule,
+    NotificationsModule,
+  ],
   controllers: [PropertyVisitsController],
-
   providers: [PropertyVisitsService],
-
-  exports: [PropertyVisitsService],
 })
 export class PropertyVisitsModule {}

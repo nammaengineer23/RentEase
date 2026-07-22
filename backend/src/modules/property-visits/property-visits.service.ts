@@ -15,13 +15,15 @@ import {
 import { CreatePropertyVisitDto } from './dto/create-property-visit.dto';
 import { UpdatePropertyVisitDto } from './dto/update-property-visit.dto';
 import { MailService } from '../../mail/mail.service';
-
+import { serializePrisma } from '../../common/utils/prisma-response.util';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PropertyVisitsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // =====================================
@@ -80,65 +82,140 @@ export class PropertyVisitsService {
     }
 
     const visit =
-  await this.prisma.propertyVisit.create({
-    data: {
-      propertyId: dto.propertyId,
-      tenantId: user.id,
-      visitDate,
-      notes: dto.notes,
-    },
-    include: {
-      property: true,
-      tenant: true,
-    },
-  });
+      await this.prisma.propertyVisit.create({
+        data: {
+          propertyId: dto.propertyId,
+          tenantId: user.id,
+          visitDate,
+          notes: dto.notes,
+        },
 
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+                orderBy: {
+                  displayOrder: 'asc',
+                },
+              },
+            },
+          },
+
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+    // ======================================
+    // Send Booking Email
+    // ======================================
+
+    try {
+      await this.mailService.sendVisitBookingEmail(
+        visit.tenant.email,
+        visit.tenant.fullName,
+        visit.property.title,
+        visit.visitDate.toLocaleString(),
+      );
+    } catch (error) {
+      console.error(
+        'Failed to send booking email:',
+        error,
+      );
+    }
+    // ======================================
+// Create Notification for Owner
 // ======================================
-// Send Booking Email
-// ======================================
 
-try {
-  await this.mailService.sendVisitBookingEmail(
-    visit.tenant.email,
-    visit.tenant.fullName,
-    visit.property.title,
-    visit.visitDate.toLocaleString(),
-  );
-} catch (error) {
-  console.error(
-    'Failed to send booking email:',
-    error,
-  );
-}
+await this.notificationsService.createNotification(
+  property.ownerId,
+  'New Visit Request',
+  `${visit.tenant.fullName} requested a visit for "${visit.property.title}" on ${visit.visitDate.toLocaleString()}.`,
+);
 
-return {
-  success: true,
-  message: 'Visit request created successfully.',
-  data: visit,
-};
+    return {
+      success: true,
+      message: 'Visit request created successfully.',
+      data: serializePrisma(visit),
+    };
   }
+
+  
 
   // =====================================
   // Owner Visits
   // =====================================
 
   async getOwnerVisits(user: any) {
-    return this.prisma.propertyVisit.findMany({
-      where: {
-        property: {
-          ownerId: user.id,
+    const visits =
+      await this.prisma.propertyVisit.findMany({
+        where: {
+          property: {
+            ownerId: user.id,
+          },
         },
-      },
 
-      include: {
-        property: true,
-        tenant: true,
-      },
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
 
-      orderBy: {
-        visitDate: 'asc',
-      },
-    });
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+                orderBy: {
+                  displayOrder: 'asc',
+                },
+              },
+            },
+          },
+
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+
+        orderBy: {
+          visitDate: 'asc',
+        },
+      });
+
+    return {
+      success: true,
+      total: visits.length,
+      visits: serializePrisma(visits),
+    };
   }
 
   // =====================================
@@ -146,15 +223,51 @@ return {
   // =====================================
 
   async findAll() {
-    return this.prisma.propertyVisit.findMany({
-      include: {
-        property: true,
-        tenant: true,
-      },
-      orderBy: {
-        visitDate: 'asc',
-      },
-    });
+    const visits =
+      await this.prisma.propertyVisit.findMany({
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+                orderBy: {
+                  displayOrder: 'asc',
+                },
+              },
+            },
+          },
+
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+
+        orderBy: {
+          visitDate: 'asc',
+        },
+      });
+
+    return {
+      success: true,
+      total: visits.length,
+      visits: serializePrisma(visits),
+    };
   }
 
   // =====================================
@@ -167,9 +280,38 @@ return {
         where: {
           id,
         },
+
         include: {
-          property: true,
-          tenant: true,
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+                orderBy: {
+                  displayOrder: 'asc',
+                },
+              },
+            },
+          },
+
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
         },
       });
 
@@ -179,10 +321,9 @@ return {
       );
     }
 
-    return visit;
+    return serializePrisma(visit);
   }
-
-  // =====================================
+    // =====================================
   // Approve
   // =====================================
 
@@ -190,8 +331,7 @@ return {
     id: string,
     user: any,
   ) {
-    const visit =
-      await this.findOne(id);
+    const visit = await this.findOne(id);
 
     if (
       visit.property.ownerId !== user.id &&
@@ -203,42 +343,66 @@ return {
     }
 
     const updatedVisit =
-  await this.prisma.propertyVisit.update({
-    where: {
-      id,
-    },
-    data: {
-      status: VisitStatus.APPROVED,
-    },
-    include: {
-      property: true,
-      tenant: true,
-    },
-  });
+      await this.prisma.propertyVisit.update({
+        where: {
+          id,
+        },
+        data: {
+          status: VisitStatus.APPROVED,
+        },
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+              },
+            },
+          },
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
 
+    try {
+      await this.mailService.sendVisitApprovalEmail(
+        updatedVisit.tenant.email,
+        updatedVisit.tenant.fullName,
+        updatedVisit.property.title,
+        updatedVisit.visitDate.toLocaleString(),
+      );
+    } catch (error) {
+      console.error(error);
+    }
+      // ======================================
+// Create Notification for Tenant
 // ======================================
-// Send Approval Email
-// ======================================
 
-try {
-  await this.mailService.sendVisitApprovalEmail(
-    updatedVisit.tenant.email,
-    updatedVisit.tenant.fullName,
-    updatedVisit.property.title,
-    updatedVisit.visitDate.toLocaleString(),
-  );
-} catch (error) {
-  console.error(
-    'Failed to send approval email:',
-    error,
-  );
-}
-
-return {
-  success: true,
-  message: 'Visit approved successfully.',
-  data: updatedVisit,
-};
+await this.notificationsService.createNotification(
+  updatedVisit.tenantId,
+  'Visit Approved',
+  `Your visit for "${updatedVisit.property.title}" has been approved.`,
+);
+    return {
+      success: true,
+      message: 'Visit approved successfully.',
+      data: serializePrisma(updatedVisit),
+    };
   }
 
   // =====================================
@@ -249,66 +413,7 @@ return {
     id: string,
     user: any,
   ) {
-    const visit =
-      await this.findOne(id);
-
-    if (
-      visit.property.ownerId !== user.id &&
-      user.role !== UserRole.ADMIN
-    ) {
-      throw new ForbiddenException(
-        'Access denied.',
-      );
-    }
-
-   const updatedVisit =
-  await this.prisma.propertyVisit.update({
-    where: {
-      id,
-    },
-    data: {
-      status: VisitStatus.REJECTED,
-    },
-    include: {
-      property: true,
-      tenant: true,
-    },
-  });
-
-// ======================================
-// Send Rejection Email
-// ======================================
-
-try {
-  await this.mailService.sendVisitRejectedEmail(
-    updatedVisit.tenant.email,
-    updatedVisit.tenant.fullName,
-    updatedVisit.property.title,
-  );
-} catch (error) {
-  console.error(
-    'Failed to send rejection email:',
-    error,
-  );
-}
-
-return {
-  success: true,
-  message: 'Visit rejected successfully.',
-  data: updatedVisit,
-};
-  }
-
-  // =====================================
-  // Complete
-  // =====================================
-
-  async completeVisit(
-    id: string,
-    user: any,
-  ) {
-    const visit =
-      await this.findOne(id);
+    const visit = await this.findOne(id);
 
     if (
       visit.property.ownerId !== user.id &&
@@ -320,41 +425,141 @@ return {
     }
 
     const updatedVisit =
-  await this.prisma.propertyVisit.update({
-    where: {
-      id,
-    },
-    data: {
-      status: VisitStatus.COMPLETED,
-    },
-    include: {
-      property: true,
-      tenant: true,
-    },
-  });
+      await this.prisma.propertyVisit.update({
+        where: {
+          id,
+        },
+        data: {
+          status: VisitStatus.REJECTED,
+        },
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+              },
+            },
+          },
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
 
-// ======================================
-// Send Completion Email
-// ======================================
+    try {
+      await this.mailService.sendVisitRejectedEmail(
+        updatedVisit.tenant.email,
+        updatedVisit.tenant.fullName,
+        updatedVisit.property.title,
+      );
+    } catch (error) {
+      console.error(error);
+    }
 
-try {
-  await this.mailService.sendVisitCompletedEmail(
-    updatedVisit.tenant.email,
-    updatedVisit.tenant.fullName,
-    updatedVisit.property.title,
-  );
-} catch (error) {
-  console.error(
-    'Failed to send completion email:',
-    error,
-  );
-}
+    await this.notificationsService.createNotification(
+  updatedVisit.tenantId,
+  'Visit Rejected',
+  `Your visit for "${updatedVisit.property.title}" has been rejected.`,
+); 
 
-return {
-  success: true,
-  message: 'Visit completed successfully.',
-  data: updatedVisit,
-};
+    return {
+      success: true,
+      message: 'Visit rejected successfully.',
+      data: serializePrisma(updatedVisit),
+    };
+  }
+
+  // =====================================
+  // Complete
+  // =====================================
+
+  async completeVisit(
+    id: string,
+    user: any,
+  ) {
+    const visit = await this.findOne(id);
+
+    if (
+      visit.property.ownerId !== user.id &&
+      user.role !== UserRole.ADMIN
+    ) {
+      throw new ForbiddenException(
+        'Access denied.',
+      );
+    }
+
+    const updatedVisit =
+      await this.prisma.propertyVisit.update({
+        where: {
+          id,
+        },
+        data: {
+          status: VisitStatus.COMPLETED,
+        },
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+              },
+            },
+          },
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+    try {
+      await this.mailService.sendVisitCompletedEmail(
+        updatedVisit.tenant.email,
+        updatedVisit.tenant.fullName,
+        updatedVisit.property.title,
+      );
+    } catch (error) {
+      console.error(error);
+    }
+     await this.notificationsService.createNotification(
+  updatedVisit.tenantId,
+  'Visit Completed',
+  `Your visit for "${updatedVisit.property.title}" has been marked as completed.`,
+);
+
+    return {
+      success: true,
+      message: 'Visit completed successfully.',
+      data: serializePrisma(updatedVisit),
+    };
   }
 
   // =====================================
@@ -365,8 +570,7 @@ return {
     id: string,
     user: any,
   ) {
-    const visit =
-      await this.findOne(id);
+    const visit = await this.findOne(id);
 
     if (
       visit.tenantId !== user.id &&
@@ -379,41 +583,62 @@ return {
     }
 
     const updatedVisit =
-  await this.prisma.propertyVisit.update({
-    where: {
-      id,
-    },
-    data: {
-      status: VisitStatus.CANCELLED,
-    },
-    include: {
-      property: true,
-      tenant: true,
-    },
-  });
+      await this.prisma.propertyVisit.update({
+        where: {
+          id,
+        },
+        data: {
+          status: VisitStatus.CANCELLED,
+        },
+        include: {
+          property: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+              images: {
+                where: {
+                  isPrimary: true,
+                },
+              },
+            },
+          },
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
 
-// ======================================
-// Send Cancellation Email
-// ======================================
+    try {
+      await this.mailService.sendVisitCancelledEmail(
+        updatedVisit.tenant.email,
+        updatedVisit.tenant.fullName,
+        updatedVisit.property.title,
+      );
+    } catch (error) {
+      console.error(error);
+    }
+     await this.notificationsService.createNotification(
+  updatedVisit.tenantId,
+  'Visit Cancelled',
+  `Your visit for "${updatedVisit.property.title}" has been cancelled.`,
+);
 
-try {
-  await this.mailService.sendVisitCancelledEmail(
-    updatedVisit.tenant.email,
-    updatedVisit.tenant.fullName,
-    updatedVisit.property.title,
-  );
-} catch (error) {
-  console.error(
-    'Failed to send cancellation email:',
-    error,
-  );
-}
-
-return {
-  success: true,
-  message: 'Visit cancelled successfully.',
-  data: updatedVisit,
-};
+    return {
+      success: true,
+      message: 'Visit cancelled successfully.',
+      data: serializePrisma(updatedVisit),
+    };
   }
 
   // =====================================
@@ -426,19 +651,37 @@ return {
   ) {
     await this.findOne(id);
 
-    return this.prisma.propertyVisit.update({
-      where: {
-        id,
-      },
-      data: {
-        ...(dto.visitDate && {
-          visitDate: new Date(dto.visitDate),
-        }),
-        ...(dto.notes !== undefined && {
-          notes: dto.notes,
-        }),
-      },
-    });
+    const updatedVisit =
+      await this.prisma.propertyVisit.update({
+        where: {
+          id,
+        },
+        data: {
+          ...(dto.visitDate && {
+            visitDate: new Date(dto.visitDate),
+          }),
+          ...(dto.notes !== undefined && {
+            notes: dto.notes,
+          }),
+        },
+        include: {
+          property: true,
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+    return {
+      success: true,
+      message: 'Visit updated successfully.',
+      data: serializePrisma(updatedVisit),
+    };
   }
 
   // =====================================
@@ -456,8 +699,7 @@ return {
 
     return {
       success: true,
-      message:
-        'Visit deleted successfully.',
+      message: 'Visit deleted successfully.',
     };
   }
 }

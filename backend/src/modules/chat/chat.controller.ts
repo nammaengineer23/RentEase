@@ -14,7 +14,7 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 import { ChatService } from './chat.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';

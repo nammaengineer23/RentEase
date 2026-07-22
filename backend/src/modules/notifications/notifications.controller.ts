@@ -1,34 +1,80 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { NotificationsService } from './notifications.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { NotificationsService } from './notifications.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+
+@ApiTags('Notifications')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
-  @Post()
-  create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationsService.create(createNotificationDto);
-  }
+  // ===============================
+  // Get My Notifications
+  // ===============================
 
   @Get()
-  findAll() {
-    return this.notificationsService.findAll();
+  getMyNotifications(
+    @CurrentUser() user: any,
+  ) {
+    return this.notificationsService.getMyNotifications(
+      user,
+    );
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.notificationsService.findOne(+id);
+  // ===============================
+  // Mark One Read
+  // ===============================
+
+  @Patch(':id/read')
+  markAsRead(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.notificationsService.markAsRead(
+      id,
+      user,
+    );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateNotificationDto: UpdateNotificationDto) {
-    return this.notificationsService.update(+id, updateNotificationDto);
+  // ===============================
+  // Mark All Read
+  // ===============================
+
+  @Patch('read-all')
+  markAllAsRead(
+    @CurrentUser() user: any,
+  ) {
+    return this.notificationsService.markAllAsRead(
+      user,
+    );
   }
+
+  // ===============================
+  // Delete Notification
+  // ===============================
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.notificationsService.remove(+id);
+  remove(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.notificationsService.remove(
+      id,
+      user,
+    );
   }
 }
