@@ -5,6 +5,7 @@ import {
 
 import { PrismaService } from '../../database/prisma.service';
 import { serializePrisma } from '../../common/utils/prisma-response.util';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class NotificationsService {
@@ -20,6 +21,7 @@ export class NotificationsService {
     userId: string,
     title: string,
     message: string,
+    type: NotificationType,
   ) {
     const notification =
       await this.prisma.notification.create({
@@ -27,6 +29,7 @@ export class NotificationsService {
           userId,
           title,
           message,
+          type,
         },
       });
 
@@ -48,14 +51,29 @@ export class NotificationsService {
         },
       });
 
-    return {
-      success: true,
-      total: notifications.length,
-      notifications: serializePrisma(
-        notifications,
-      ),
-    };
+   return serializePrisma({
+  total: notifications.length,
+  unread: notifications.filter(n => !n.isRead).length,
+  notifications,
+});
   }
+
+  // ==========================================
+// Get Unread Notification Count
+// ==========================================
+
+async getUnreadCount(user: any) {
+  const count = await this.prisma.notification.count({
+    where: {
+      userId: user.id,
+      isRead: false,
+    },
+  });
+
+  return {
+    unread: count,
+  };
+}
 
     // ==========================================
   // Mark Single Notification as Read
@@ -90,7 +108,6 @@ export class NotificationsService {
       });
 
     return {
-      success: true,
       message:
         'Notification marked as read.',
       notification: serializePrisma(updated),
@@ -113,7 +130,7 @@ export class NotificationsService {
     });
 
     return {
-      success: true,
+     
       message:
         'All notifications marked as read.',
     };
@@ -148,8 +165,7 @@ export class NotificationsService {
     });
 
     return {
-      success: true,
-      message:
+            message:
         'Notification deleted successfully.',
     };
   }

@@ -29,6 +29,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { HealthModule } from './modules/health/health.module';
 import { MailModule } from './mail/mail.module';
+import { UserDevicesModule } from './modules/user-devices/user-devices.module';
 
 
 
@@ -100,6 +101,7 @@ import { MailModule } from './mail/mail.module';
     AdminModule,
     HealthModule,
     MailModule,
+    UserDevicesModule,
   ],
 
   controllers: [AppController],

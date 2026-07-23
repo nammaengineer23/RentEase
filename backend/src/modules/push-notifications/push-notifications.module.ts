@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { PrismaModule } from '../../prisma/prisma.module'; // or ../../database/prisma.module (use your existing path)
+import { DatabaseModule } from '../../database/database.module';
 import { FirebaseModule } from '../../firebase/firebase.module';
 
 import { PushNotificationsController } from './push-notifications.controller';
@@ -8,7 +8,7 @@ import { PushNotificationsService } from './push-notifications.service';
 
 @Module({
   imports: [
-    PrismaModule,
+    DatabaseModule,
     FirebaseModule,
   ],
   controllers: [PushNotificationsController],

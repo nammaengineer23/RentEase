@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -27,9 +28,11 @@ export class ChatController {
     private readonly chatService: ChatService,
   ) {}
 
+
   // ==========================
   // Start Conversation
   // ==========================
+
   @Post('conversations')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -43,9 +46,27 @@ export class ChatController {
     );
   }
 
+
+  // ==========================
+  // Conversation List
+  // ==========================
+
+  @Get('conversations')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  listConversations(
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.listConversations(
+      user.id,
+    );
+  }
+
+
   // ==========================
   // Send Message
   // ==========================
+
   @Post('conversations/:conversationId/messages')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -61,39 +82,11 @@ export class ChatController {
     );
   }
 
-  // ==========================
-// Conversation List
-// ==========================
-@Get('conversations')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-listConversations(
-  @CurrentUser() user: any,
-) {
-  return this.chatService.listConversations(
-    user.id,
-  );
-}
-
-// ==========================
-// Mark Message Read
-// ==========================
-@Patch('messages/:messageId/read')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
-markAsRead(
-  @Param('messageId') messageId: string,
-  @CurrentUser() user: any,
-) {
-  return this.chatService.markAsRead(
-    messageId,
-    user.id,
-  );
-}
 
   // ==========================
   // Get Messages
   // ==========================
+
   @Get('conversations/:conversationId/messages')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -103,6 +96,62 @@ markAsRead(
   ) {
     return this.chatService.getMessages(
       conversationId,
+      user.id,
+    );
+  }
+
+
+  // ==========================
+  // Mark Conversation Messages Read
+  // ==========================
+
+  @Patch('conversations/:conversationId/read')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  markAsRead(
+    @Param('conversationId') conversationId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.markAsRead(
+      conversationId,
+      user.id,
+    );
+  }
+
+
+  // ==========================
+  // Edit Message
+  // ==========================
+
+  @Patch('messages/:messageId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  editMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+    @Body() dto: SendMessageDto,
+  ) {
+    return this.chatService.editMessage(
+      messageId,
+      user.id,
+      dto.text,
+    );
+  }
+
+
+  // ==========================
+  // Delete Message
+  // ==========================
+
+  @Delete('messages/:messageId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  deleteMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.chatService.deleteMessage(
+      messageId,
       user.id,
     );
   }

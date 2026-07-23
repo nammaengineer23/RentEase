@@ -18,7 +18,7 @@ export class PushNotificationsService {
     userId: string,
     dto: RegisterDeviceDto,
   ) {
-    return this.prisma.deviceToken.upsert({
+    return this.prisma.userDevice.upsert({
       where: {
         token: dto.token,
       },
@@ -44,7 +44,7 @@ async sendToUser(
   data?: Record<string, string>,
 ) {
   const devices =
-    await this.prisma.deviceToken.findMany({
+    await this.prisma.userDevice.findMany({
       where: {
         userId,
       },
@@ -76,7 +76,7 @@ async sendToUser(
     userId: string,
     token: string,
   ) {
-    await this.prisma.deviceToken.deleteMany({
+    await this.prisma.userDevice.deleteMany({
       where: {
         userId,
         token,

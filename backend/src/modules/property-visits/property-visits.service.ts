@@ -17,7 +17,7 @@ import { UpdatePropertyVisitDto } from './dto/update-property-visit.dto';
 import { MailService } from '../../mail/mail.service';
 import { serializePrisma } from '../../common/utils/prisma-response.util';
 import { NotificationsService } from '../notifications/notifications.service';
-
+import { NotificationType } from '@prisma/client';
 @Injectable()
 export class PropertyVisitsService {
   constructor(
@@ -146,9 +146,10 @@ export class PropertyVisitsService {
 // ======================================
 
 await this.notificationsService.createNotification(
-  property.ownerId,
+  visit.property.ownerId,
   'New Visit Request',
-  `${visit.tenant.fullName} requested a visit for "${visit.property.title}" on ${visit.visitDate.toLocaleString()}.`,
+  `${visit.tenant.fullName} requested a property visit.`,
+  NotificationType.VISIT_REQUEST,
 );
 
     return {
@@ -394,9 +395,10 @@ await this.notificationsService.createNotification(
 // ======================================
 
 await this.notificationsService.createNotification(
-  updatedVisit.tenantId,
+  visit.tenantId,
   'Visit Approved',
-  `Your visit for "${updatedVisit.property.title}" has been approved.`,
+  'Your property visit has been approved.',
+  NotificationType.VISIT_APPROVED,
 );
     return {
       success: true,
@@ -472,10 +474,11 @@ await this.notificationsService.createNotification(
     }
 
     await this.notificationsService.createNotification(
-  updatedVisit.tenantId,
+  visit.tenantId,
   'Visit Rejected',
-  `Your visit for "${updatedVisit.property.title}" has been rejected.`,
-); 
+  'Your property visit has been rejected.',
+  NotificationType.VISIT_REJECTED,
+);
 
     return {
       success: true,
@@ -550,9 +553,10 @@ await this.notificationsService.createNotification(
       console.error(error);
     }
      await this.notificationsService.createNotification(
-  updatedVisit.tenantId,
+  visit.tenantId,
   'Visit Completed',
-  `Your visit for "${updatedVisit.property.title}" has been marked as completed.`,
+  'Your visit has been marked as completed.',
+  NotificationType.VISIT_COMPLETED,
 );
 
     return {
@@ -632,6 +636,7 @@ await this.notificationsService.createNotification(
   updatedVisit.tenantId,
   'Visit Cancelled',
   `Your visit for "${updatedVisit.property.title}" has been cancelled.`,
+  NotificationType.VISIT_REJECTED,
 );
 
     return {

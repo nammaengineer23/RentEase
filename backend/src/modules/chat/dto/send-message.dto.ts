@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+import { MessageType } from '@prisma/client';
 
 export class SendMessageDto {
   @ApiProperty({
@@ -8,4 +15,13 @@ export class SendMessageDto {
   @IsString()
   @IsNotEmpty()
   text!: string;
+
+  @ApiPropertyOptional({
+    enum: MessageType,
+    default: MessageType.TEXT,
+    example: MessageType.TEXT,
+  })
+  @IsOptional()
+  @IsEnum(MessageType)
+  messageType?: MessageType = MessageType.TEXT;
 }

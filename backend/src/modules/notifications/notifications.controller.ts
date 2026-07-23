@@ -5,14 +5,17 @@ import {
   Delete,
   Param,
   UseGuards,
+  Request as Req,
 } from '@nestjs/common';
-
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-
+import { Request } from 'express';
 @ApiTags('Notifications')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -22,59 +25,81 @@ export class NotificationsController {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  // ===============================
+  // ==========================================
   // Get My Notifications
-  // ===============================
+  // ==========================================
 
   @Get()
-  getMyNotifications(
-    @CurrentUser() user: any,
-  ) {
+  @ApiOperation({
+    summary: 'Get my notifications',
+  })
+  getMyNotifications(@Req() req: Request) {
     return this.notificationsService.getMyNotifications(
-      user,
+      req.user,
     );
   }
 
-  // ===============================
-  // Mark One Read
-  // ===============================
+  // ==========================================
+  // Get Unread Count
+  // ==========================================
+
+  @Get('unread-count')
+  @ApiOperation({
+    summary: 'Get unread notification count',
+  })
+  getUnreadCount(@Req() req: Request) {
+    return this.notificationsService.getUnreadCount(
+      req.user,
+    );
+  }
+
+  // ==========================================
+  // Mark Single Notification Read
+  // ==========================================
 
   @Patch(':id/read')
+  @ApiOperation({
+    summary: 'Mark notification as read',
+  })
   markAsRead(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @Req() req: Request,
   ) {
     return this.notificationsService.markAsRead(
       id,
-      user,
+      req.user,
     );
   }
 
-  // ===============================
-  // Mark All Read
-  // ===============================
+  // ==========================================
+  // Mark All Notifications Read
+  // ==========================================
 
   @Patch('read-all')
-  markAllAsRead(
-    @CurrentUser() user: any,
-  ) {
+  @ApiOperation({
+    summary: 'Mark all notifications as read',
+  })
+  markAllAsRead(@Req() req: Request) {
     return this.notificationsService.markAllAsRead(
-      user,
+      req.user,
     );
   }
 
-  // ===============================
+  // ==========================================
   // Delete Notification
-  // ===============================
+  // ==========================================
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete notification',
+  })
   remove(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @Req() req: Request,
   ) {
     return this.notificationsService.remove(
       id,
-      user,
+      req.user,
     );
   }
 }
