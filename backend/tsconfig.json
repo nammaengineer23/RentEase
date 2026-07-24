@@ -3,24 +3,39 @@
     "module": "commonjs",
     "target": "ES2022",
     "lib": ["ES2022"],
+
     "declaration": true,
     "removeComments": true,
+
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+
     "sourceMap": true,
+
+    "rootDir": "./src",
     "outDir": "./dist",
+
     "baseUrl": "./",
+
     "incremental": true,
     "skipLibCheck": true,
+
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
+
     "moduleResolution": "node",
+
     "resolveJsonModule": true,
+
     "types": ["node"],
+
+    "ignoreDeprecations": "6.0",
+
     "paths": {
       "@/*": ["src/*"],
       "@config/*": ["src/config/*"],
@@ -29,10 +44,12 @@
       "@database/*": ["src/database/*"]
     }
   },
+
   "include": [
     "src/**/*",
     "prisma/**/*"
   ],
+
   "exclude": [
     "node_modules",
     "dist",
