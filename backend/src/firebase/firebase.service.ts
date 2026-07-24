@@ -1,49 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import {
-  cert,
-  getApp,
-  getApps,
-  initializeApp,
-} from 'firebase-admin/app';
+import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
 
-import {
-  getStorage,
-  getDownloadURL,
-} from 'firebase-admin/storage';
+import { getStorage, getDownloadURL } from 'firebase-admin/storage';
 
 import { getAuth } from 'firebase-admin/auth';
 import { getMessaging } from 'firebase-admin/messaging';
 
 @Injectable()
 export class FirebaseService {
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     if (!getApps().length) {
       initializeApp({
         credential: cert({
-          projectId: this.configService.get<string>(
-            'FIREBASE_PROJECT_ID',
-          ),
-          clientEmail: this.configService.get<string>(
-            'FIREBASE_CLIENT_EMAIL',
-          ),
+          projectId: this.configService.get<string>('FIREBASE_PROJECT_ID'),
+          clientEmail: this.configService.get<string>('FIREBASE_CLIENT_EMAIL'),
           privateKey: this.configService
             .get<string>('FIREBASE_PRIVATE_KEY')
             ?.replace(/\\n/g, '\n'),
         }),
 
-        storageBucket:
-          this.configService.get<string>(
-            'FIREBASE_STORAGE_BUCKET',
-          ),
+        storageBucket: this.configService.get<string>(
+          'FIREBASE_STORAGE_BUCKET',
+        ),
       });
 
-      console.log(
-        '✅ Firebase Admin initialized',
-      );
+      console.log('✅ Firebase Admin initialized');
     }
   }
 
@@ -55,19 +38,12 @@ export class FirebaseService {
     return getStorage(getApp());
   }
 
-  async uploadImage(
-    file: Express.Multer.File,
-    folder = 'properties',
-  ) {
-    const bucket =
-      this.getStorage().bucket();
+  async uploadImage(file: Express.Multer.File, folder = 'properties') {
+    const bucket = this.getStorage().bucket();
 
-    const fileName = `${folder}/${Date.now()}-${
-      file.originalname
-    }`;
+    const fileName = `${folder}/${Date.now()}-${file.originalname}`;
 
-    const firebaseFile =
-      bucket.file(fileName);
+    const firebaseFile = bucket.file(fileName);
 
     await firebaseFile.save(file.buffer, {
       metadata: {
@@ -75,8 +51,7 @@ export class FirebaseService {
       },
     });
 
-    const imageUrl =
-      await getDownloadURL(firebaseFile);
+    const imageUrl = await getDownloadURL(firebaseFile);
 
     return {
       publicId: fileName,
@@ -84,14 +59,10 @@ export class FirebaseService {
     };
   }
 
-  async deleteImage(
-    publicId: string,
-  ) {
-    const bucket =
-      this.getStorage().bucket();
+  async deleteImage(publicId: string) {
+    const bucket = this.getStorage().bucket();
 
-    const file =
-      bucket.file(publicId);
+    const file = bucket.file(publicId);
 
     await file.delete({
       ignoreNotFound: true,
@@ -108,12 +79,8 @@ export class FirebaseService {
     return getAuth();
   }
 
-  async verifyToken(
-    idToken: string,
-  ) {
-    return this.getAuth().verifyIdToken(
-      idToken,
-    );
+  async verifyToken(idToken: string) {
+    return this.getAuth().verifyIdToken(idToken);
   }
 
   // =====================================
@@ -141,17 +108,19 @@ export class FirebaseService {
   }
 
   async sendToDevices(
-    tokens: string[],
-    title: string,
-    body: string,
-    data?: Record<string, string>,
-  ) {
-    if (!tokens.length) {
-      return;
-    }
+  tokens: string[],
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+) {
+  if (!tokens.length) {
+    console.log('⚠️ No FCM tokens found.');
+    return;
+  }
 
-    return this.getMessaging()
-      .sendEachForMulticast({
+  try {
+    const response =
+      await this.getMessaging().sendEachForMulticast({
         tokens,
         notification: {
           title,
@@ -159,5 +128,38 @@ export class FirebaseService {
         },
         data,
       });
+
+    console.log('==============================');
+    console.log('📲 Firebase Push Notification');
+    console.log(
+      `Success: ${response.successCount}`,
+    );
+    console.log(
+      `Failure: ${response.failureCount}`,
+    );
+
+    response.responses.forEach((result, index) => {
+      if (result.success) {
+        console.log(
+          `✅ Token ${index + 1}: Sent successfully`,
+        );
+      } else {
+        console.error(
+          `❌ Token ${index + 1}:`,
+          result.error?.message,
+        );
+      }
+    });
+
+    console.log('==============================');
+
+    return response;
+  } catch (error) {
+    console.error(
+      '❌ Firebase send failed:',
+      error,
+    );
+    throw error;
   }
+}
 }

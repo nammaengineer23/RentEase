@@ -14,10 +14,7 @@ export class PushNotificationsService {
   // ==========================
   // Register Device
   // ==========================
-  async registerDevice(
-    userId: string,
-    dto: RegisterDeviceDto,
-  ) {
+  async registerDevice(userId: string, dto: RegisterDeviceDto) {
     return this.prisma.userDevice.upsert({
       where: {
         token: dto.token,
@@ -34,15 +31,19 @@ export class PushNotificationsService {
     });
   }
 
-// ==========================
-// Send Notification To User
-// ==========================
-async sendToUser(
+  // ==========================
+  // Send Notification To User
+  // ==========================
+ async sendToUser(
   userId: string,
   title: string,
   body: string,
   data?: Record<string, string>,
 ) {
+  console.log('==============================');
+  console.log('📨 sendToUser() called');
+  console.log('User ID:', userId);
+
   const devices =
     await this.prisma.userDevice.findMany({
       where: {
@@ -50,7 +51,12 @@ async sendToUser(
       },
     });
 
+  console.log('Devices found:', devices.length);
+
   if (devices.length === 0) {
+    console.log('❌ No registered devices');
+    console.log('==============================');
+
     return {
       success: false,
       message: 'No registered devices',
@@ -61,6 +67,10 @@ async sendToUser(
     (device) => device.token,
   );
 
+  console.log('FCM Tokens:', tokens);
+  console.log('➡️ Calling Firebase...');
+  console.log('==============================');
+
   return this.firebaseService.sendToDevices(
     tokens,
     title,
@@ -68,14 +78,10 @@ async sendToUser(
     data,
   );
 }
-
   // ==========================
   // Remove Device
   // ==========================
-  async unregisterDevice(
-    userId: string,
-    token: string,
-  ) {
+  async unregisterDevice(userId: string, token: string) {
     await this.prisma.userDevice.deleteMany({
       where: {
         userId,

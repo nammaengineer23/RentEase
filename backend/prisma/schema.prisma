@@ -8,23 +8,24 @@ datasource db {
 }
 
 model User {
-  id                 String          @id @default(uuid())
-  fullName           String
-  email              String          @unique
-  phone              String          @unique
-  role               UserRole        @default(USER)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  passwordHash       String
-  isActive           Boolean         @default(true)
-  favorites          Favorite[]
-  notifications      Notification[]
-  properties         Property[]
-  visits             PropertyVisit[] @relation("TenantVisits")
-  refreshTokens      RefreshToken[]
-  reviews            Review[]
-  devices            UserDevice[]
-  ownerConversations Conversation[]  @relation("OwnerConversations")
+  id                  String               @id @default(uuid())
+  fullName            String
+  email               String               @unique
+  phone               String               @unique
+  role                UserRole             @default(USER)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  passwordHash        String
+  isActive            Boolean              @default(true)
+  favorites           Favorite[]
+  notifications       Notification[]
+  properties          Property[]
+  visits              PropertyVisit[]      @relation("TenantVisits")
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  reviews             Review[]
+  devices             UserDevice[]
+  ownerConversations  Conversation[]       @relation("OwnerConversations")
 
   tenantConversations Conversation[] @relation("TenantConversations")
 
@@ -226,6 +227,18 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 enum UserRole {
   USER
   OWNER
@@ -272,6 +285,7 @@ enum NotificationType {
   VISIT_APPROVED
   VISIT_REJECTED
   VISIT_COMPLETED
+  VISIT_CANCELLED
   REVIEW_ADDED
   FAVORITE_ADDED
   PROPERTY_APPROVED

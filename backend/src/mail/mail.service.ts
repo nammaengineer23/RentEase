@@ -1,19 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-
+import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
 
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('MAIL_HOST'),
-      port: Number(
-        this.configService.get<number>('MAIL_PORT'),
-      ),
+      port: Number(this.configService.get<number>('MAIL_PORT')),
       secure: false,
       auth: {
         user: this.configService.get<string>('MAIL_USER'),
@@ -26,10 +22,7 @@ export class MailService {
   // Welcome Email
   // ==========================================
 
-  async sendWelcomeEmail(
-    email: string,
-    fullName: string,
-  ) {
+  async sendWelcomeEmail(email: string, fullName: string) {
     await this.transporter.sendMail({
       from: this.configService.get<string>('MAIL_FROM'),
       to: email,
@@ -273,4 +266,38 @@ export class MailService {
       `,
     });
   }
+
+  // ==========================================
+  // Send Password Reset Mail
+  // ==========================================
+  async sendPasswordResetEmail(
+  email: string,
+  fullName: string,
+  resetLink: string,
+) {
+  await this.transporter.sendMail({
+    from: this.configService.get<string>('MAIL_FROM'),
+    to: email,
+    subject: 'Reset your RentEase password',
+    html: `
+      <h2>Hello ${fullName},</h2>
+
+      <p>We received a request to reset your password.</p>
+
+      <p>
+        <a href="${resetLink}">
+          Click here to reset your password
+        </a>
+      </p>
+
+      <p>This link expires in 30 minutes.</p>
+
+      <p>If you didn't request this, you can ignore this email.</p>
+
+      <br/>
+
+      <b>RentEase Team</b>
+    `,
+  });
+}
 }

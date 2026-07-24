@@ -7,11 +7,14 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { PropertyVisitsController } from './property-visits.controller';
 import { PropertyVisitsService } from './property-visits.service';
 
+import { PushNotificationsModule } from '../push-notifications/push-notifications.module';
+
 @Module({
   imports: [
     PrismaModule,
-    MailModule,
     NotificationsModule,
+    MailModule,
+    PushNotificationsModule,
   ],
   controllers: [PropertyVisitsController],
   providers: [PropertyVisitsService],
